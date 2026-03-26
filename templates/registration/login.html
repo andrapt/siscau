@@ -1,0 +1,62 @@
+{% extends "adminlte/base.html" %}
+{% load i18n static %}
+
+{% block body_class %}login-page{% endblock %}
+
+{% block title %}
+    SISCau - Sistema de Controle Agrícola
+{% endblock %} 
+
+{% block body %}
+    <div class="login-box">
+        <!-- /.login-logo -->
+        <div class="card card-outline card-primary">
+            <div class="card-header text-center">
+            <a href="/admin/dashboard-v2/" class="h1"><b>Sis</b>CAU</a>
+            </div>
+            <div class="card-body">
+            <p class="login-box-msg">Entre para iniciar a sessão</p>
+
+            <form action="#" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                <input type="hidden" name="next" value="{{ next}}">
+                
+                <div class="input-group mb-3">
+                <input type="text" name="username" class="form-control" placeholder="Usuário" autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username">
+                <div class="input-group-append">
+                    <div class="input-group-text">
+                    <span class="fas  fa-user "></span>
+                    </div>
+                </div>
+                </div>
+                <small class="text-danger"></small>
+                
+                <div class="input-group mb-3">
+                <input type="password" name="password" class="form-control" placeholder="senha" maxlength="50" required id="id_password">
+                <div class="input-group-append">
+                    <div class="input-group-text">
+                    <span class="fas   fa-lock "></span>
+                    </div>
+                </div>
+                </div>
+                <small class="text-danger"></small>                
+                <div class="row">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+                    </div>
+                </div>
+            </form>
+
+            <p class="mb-1">
+                <a href="/admin/forgot-password-v2/">Recuperar senha</a>
+            </p>
+            
+            </div>
+            <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+    </div>
+    <!-- /.login-box -->
+
+{% endblock %}

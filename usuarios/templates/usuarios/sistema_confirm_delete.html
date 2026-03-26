@@ -1,0 +1,206 @@
+{% extends 'usuarios/base.html' %}
+
+{% block title %}Excluir Sistema - {{ object.nome }}{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Excluir Sistema</h1>
+    <div>
+        <a href="{% url 'usuarios:sistema_detail' object.pk %}" class="btn btn-secondary btn-sm shadow-sm me-2">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+        <a href="{% url 'usuarios:sistema_list' %}" class="btn btn-info btn-sm shadow-sm">
+            <i class="bi bi-list"></i> Lista
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4 border-danger">
+            <div class="card-header py-3 bg-danger">
+                <h6 class="m-0 font-weight-bold text-white">
+                    <i class="bi bi-exclamation-triangle"></i> Confirmação de Exclusão
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="bi bi-exclamation-triangle"></i> Atenção!
+                    </h5>
+                    <p>Você está prestes a excluir o sistema <strong>"{{ object.nome }}"</strong>.</p>
+                    <hr>
+                    <p class="mb-0">
+                        <strong>Esta ação é irreversível e resultará em:</strong>
+                    </p>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <i class="bi bi-person-badge display-4 text-warning"></i>
+                                <h5 class="card-title text-warning">{{ object.perfis.count }} Perfil{{ object.perfis.count|pluralize:"is" }}</h5>
+                                <p class="card-text">Serão excluído{{ object.perfis.count|pluralize }} permanentemente</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-danger">
+                            <div class="card-body text-center">
+                                <i class="bi bi-people display-4 text-danger"></i>
+                                <h5 class="card-title text-danger">{{ object.usuarios_acesso.count }} Acesso{{ object.usuarios_acesso.count|pluralize }}</h5>
+                                <p class="card-text">Usuários perderão acesso ao sistema</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if object.perfis.exists %}
+                    <div class="alert alert-warning" role="alert">
+                        <h6><i class="bi bi-info-circle"></i> Perfis que serão excluídos:</h6>
+                        <ul class="mb-0">
+                            {% for perfil in object.perfis.all %}
+                                <li>
+                                    <strong>{{ perfil.nome }}</strong>
+                                    {% if perfil.funcoes.exists %}
+                                        - {{ perfil.funcoes.count }} função{{ perfil.funcoes.count|pluralize:"ões,ão" }}
+                                    {% endif %}
+                                    {% if perfil.usuarios_sistema.exists %}
+                                        - {{ perfil.usuarios_sistema.count }} usuário{{ perfil.usuarios_sistema.count|pluralize }}
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                
+                {% if object.usuarios_acesso.exists %}
+                    <div class="alert alert-info" role="alert">
+                        <h6><i class="bi bi-info-circle"></i> Usuários que perderão acesso:</h6>
+                        <ul class="mb-0">
+                            {% for usuario_sistema in object.usuarios_acesso.all %}
+                                <li>
+                                    <strong>{{ usuario_sistema.usuario.nome_completo }}</strong>
+                                    - Perfil: {{ usuario_sistema.perfil.nome }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="bi bi-trash"></i> Sim, Excluir Sistema
+                            </button>
+                            <a href="{% url 'usuarios:sistema_detail' object.pk %}" class="btn btn-secondary btn-lg ms-3">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                        </div>
+                        <div class="text-muted">
+                            <small>
+                                <i class="bi bi-clock"></i>
+                                Sistema criado em {{ object.data_criacao|date:"d/m/Y H:i" }}
+                            </small>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Informações do Sistema -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Informações do Sistema</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <i class="bi bi-gear display-4 text-muted"></i>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Nome:</strong>
+                    <p class="text-gray-800">{{ object.nome }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Descrição:</strong>
+                    <p class="text-gray-800">{{ object.descricao|default:"Sem descrição" }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Status:</strong>
+                    <p>
+                        {% if object.ativo %}
+                            <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inativo</span>
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Criado em:</strong>
+                    <p class="text-gray-800">{{ object.data_criacao|date:"d/m/Y H:i:s" }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Última atualização:</strong>
+                    <p class="text-gray-800">{{ object.data_atualizacao|date:"d/m/Y H:i:s" }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alternativas -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Alternativas</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    Se você não deseja excluir o sistema permanentemente, considere estas opções:
+                </p>
+                
+                <div class="d-grid gap-2">
+                    <a href="{% url 'usuarios:sistema_update' object.pk %}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-toggle-off"></i> Desativar Sistema
+                    </a>
+                    <a href="{% url 'usuarios:sistema_detail' object.pk %}" class="btn btn-info btn-sm">
+                        <i class="bi bi-eye"></i> Revisar Detalhes
+                    </a>
+                    <a href="{% url 'usuarios:sistema_list' %}" class="btn btn-secondary btn-sm">
+                        <i class="bi bi-list"></i> Voltar à Lista
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Adicionar confirmação extra no botão de exclusão
+        const deleteButton = document.querySelector('button[type="submit"]');
+        if (deleteButton) {
+            deleteButton.addEventListener('click', function(e) {
+                const confirmMessage = 'ATENÇÃO: Esta ação é irreversível!\n\n' +
+                    'Você está prestes a excluir o sistema "{{ object.nome }}" e todos os seus dados relacionados.\n\n' +
+                    'Digite "EXCLUIR" para confirmar:';
+                
+                const userInput = prompt(confirmMessage);
+                if (userInput !== 'EXCLUIR') {
+                    e.preventDefault();
+                    alert('Exclusão cancelada. O texto digitado não confere.');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

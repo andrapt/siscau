@@ -1,0 +1,183 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+{% block content_header %}
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+{% endblock %}
+
+{% block title %}
+    SISCau - Sistema de Controle Agrícola
+{% endblock %}
+
+{% block content %}
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Colheita</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'colheitas' %}">Colheitas</a></li>
+                        <li class="breadcrumb-item active">{% if editar %}Editar{% else %}Cadastrar{% endif %}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">{% if editar %}Editar{% else %}Cadastrar{% endif %} Colheita</h3>
+                        </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="card-body">
+                                {% if messages %}
+                                    {% for message in messages %}
+                                        <div class="alert alert-{{ message.tags }}">
+                                            {{ message }}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.quadra.id_for_label }}">{{ form.quadra.label }}</label>
+                                            {{ form.quadra }}
+                                            {% if form.quadra.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.quadra.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.variedade.id_for_label }}">{{ form.variedade.label }}</label>
+                                            {{ form.variedade }}
+                                            {% if form.variedade.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.variedade.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.data.id_for_label }}">{{ form.data.label }}</label>
+                                            {{ form.data }}
+                                            {% if form.data.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.data.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.ano.id_for_label }}">{{ form.ano.label }}</label>
+                                            {{ form.ano }}
+                                            {% if form.ano.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.ano.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.tipoColheita.id_for_label }}">{{ form.tipoColheita.label }}</label>
+                                            {{ form.tipoColheita }}
+                                            {% if form.tipoColheita.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.tipoColheita.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.peso.id_for_label }}">{{ form.peso.label }}</label>
+                                            {{ form.peso }}
+                                            {% if form.peso.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.peso.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.preco.id_for_label }}">{{ form.preco.label }}</label>
+                                            {{ form.preco }}
+                                            {% if form.preco.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.preco.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.valorTotal.id_for_label }}">{{ form.valorTotal.label }}</label>
+                                            {{ form.valorTotal }}
+                                            {% if form.valorTotal.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.valorTotal.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="{{ form.descricao.id_for_label }}">{{ form.descricao.label }}</label>
+                                    {{ form.descricao }}
+                                    {% if form.descricao.errors %}
+                                        <div class="text-danger">
+                                            {{ form.descricao.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="card-footer">
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                                <a href="{% url 'colheitas' %}" class="btn btn-default">Cancelar</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+<script>
+    function calcularValorTotal() {
+        const peso = parseFloat(document.getElementById('peso').value) || 0;
+        const preco = parseFloat(document.getElementById('preco').value) || 0;
+        const valorTotal = peso * preco;
+        document.getElementById('valorTotal').value = valorTotal.toFixed(2);
+    }
+
+    // Adicionar eventos para recalcular quando os valores mudarem
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('peso').addEventListener('input', calcularValorTotal);
+        document.getElementById('preco').addEventListener('input', calcularValorTotal);
+        
+        // Calcular inicialmente se os valores já estiverem preenchidos
+        calcularValorTotal();
+    });
+</script>
+{% endblock%}

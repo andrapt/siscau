@@ -1,0 +1,245 @@
+{% extends 'usuarios/base.html' %}
+
+{% block title %}Funções{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Funções</h1>
+    <a href="{% url 'usuarios:funcao_create' %}" class="btn btn-primary btn-sm shadow-sm">
+        <i class="bi bi-plus-circle"></i> Nova Função
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="nome" class="form-label">Nome</label>
+                <input type="text" class="form-control" id="nome" name="nome" value="{{ request.GET.nome }}" placeholder="Digite o nome da função">
+            </div>
+            <div class="col-md-3">
+                <label for="codigo" class="form-label">Código</label>
+                <input type="text" class="form-control" id="codigo" name="codigo" value="{{ request.GET.codigo }}" placeholder="Digite o código">
+            </div>
+            <div class="col-md-2">
+                <label for="ativo" class="form-label">Status</label>
+                <select class="form-select" id="ativo" name="ativo">
+                    <option value="">Todos</option>
+                    <option value="True" {% if request.GET.ativo == 'True' %}selected{% endif %}>Ativo</option>
+                    <option value="False" {% if request.GET.ativo == 'False' %}selected{% endif %}>Inativo</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="ordenar" class="form-label">Ordenar por</label>
+                <select class="form-select" id="ordenar" name="ordenar">
+                    <option value="nome" {% if request.GET.ordenar == 'nome' %}selected{% endif %}>Nome</option>
+                    <option value="codigo" {% if request.GET.ordenar == 'codigo' %}selected{% endif %}>Código</option>
+                    <option value="-data_criacao" {% if request.GET.ordenar == '-data_criacao' %}selected{% endif %}>Mais Recente</option>
+                    <option value="data_criacao" {% if request.GET.ordenar == 'data_criacao' %}selected{% endif %}>Mais Antigo</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{% url 'usuarios:funcao_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Limpar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Funções -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Lista de Funções ({{ page_obj.paginator.count }} encontrada{{ page_obj.paginator.count|pluralize }})</h6>
+    </div>
+    <div class="card-body">
+        {% if page_obj %}
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Código</th>
+                            <th>Descrição</th>
+                            <th>Perfis</th>
+                            <th>Status</th>
+                            <th>Data Criação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for funcao in page_obj %}
+                        <tr>
+                            <td>
+                                <strong>{{ funcao.nome }}</strong>
+                            </td>
+                            <td>
+                                <code class="text-primary">{{ funcao.codigo }}</code>
+                            </td>
+                            <td>{{ funcao.descricao|truncatechars:50|default:"-" }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ funcao.perfis.count }}</span>
+                            </td>
+                            <td>
+                                {% if funcao.ativo %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ funcao.data_criacao|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'usuarios:funcao_edit' funcao.pk %}" class="btn btn-warning btn-sm" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'usuarios:funcao_delete' funcao.pk %}" class="btn btn-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta função?')">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Paginação -->
+            {% if page_obj.has_other_pages %}
+                <nav aria-label="Navegação de páginas">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-list-check display-1 text-muted"></i>
+                <h4 class="text-muted mt-3">Nenhuma função encontrada</h4>
+                <p class="text-muted">Não há funções cadastradas ou que atendam aos filtros aplicados.</p>
+                <a href="{% url 'usuarios:funcao_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Cadastrar Primeira Função
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Estatísticas Rápidas -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total de Funções
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_funcoes }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-list-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2" style="border-left: 4px solid #28a745;">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Funções Ativas
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ funcoes_ativas }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2" style="border-left: 4px solid #17a2b8;">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Em Uso
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ funcoes_em_uso }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-gear fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2" style="border-left: 4px solid #ffc107;">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Sem Uso
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ funcoes_sem_uso }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

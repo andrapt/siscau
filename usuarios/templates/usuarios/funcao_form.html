@@ -1,0 +1,251 @@
+{% extends 'usuarios/base.html' %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        Editar Função - {{ form.instance.nome }}
+    {% else %}
+        Nova Função
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        {% if form.instance.pk %}
+            Editar Função
+        {% else %}
+            Nova Função
+        {% endif %}
+    </h1>
+    <a href="{% url 'usuarios:funcao_list' %}" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    {% if form.instance.pk %}
+                        Editar Informações da Função
+                    {% else %}
+                        Informações da Nova Função
+                    {% endif %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Nome -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.nome.id_for_label }}" class="form-label">
+                                {{ form.nome.label }}
+                                {% if form.nome.field.required %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+                            {{ form.nome }}
+                            {% if form.nome.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.nome.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Código -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.codigo.id_for_label }}" class="form-label">
+                                {{ form.codigo.label }}
+                                {% if form.codigo.field.required %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+                            {{ form.codigo }}
+                            {% if form.codigo.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.codigo.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Código único para identificação da função</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Descrição -->
+                    <div class="mb-3">
+                        <label for="{{ form.descricao.id_for_label }}" class="form-label">
+                            {{ form.descricao.label }}
+                        </label>
+                        {{ form.descricao }}
+                        {% if form.descricao.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.descricao.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Ativo -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.ativo }}
+                            <label class="form-check-label" for="{{ form.ativo.id_for_label }}">
+                                {{ form.ativo.label }}
+                            </label>
+                        </div>
+                        {% if form.ativo.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.ativo.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Botões -->
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i>
+                                {% if form.instance.pk %}
+                                    Atualizar Função
+                                {% else %}
+                                    Criar Função
+                                {% endif %}
+                            </button>
+                            <a href="{% url 'usuarios:funcao_list' %}" class="btn btn-secondary ms-2">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                        </div>
+                        {% if form.instance.pk %}
+                            <a href="{% url 'usuarios:funcao_delete' form.instance.pk %}" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir esta função?')">
+                                <i class="bi bi-trash"></i> Excluir
+                            </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Informações Adicionais -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Informações</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <i class="bi bi-list-check display-4 text-muted mb-3"></i>
+                    <h5>Função</h5>
+                    <p class="text-muted small">
+                        {% if form.instance.pk %}
+                            Edite as informações da função. Funções são utilizadas para definir permissões específicas dentro dos perfis.
+                        {% else %}
+                            Crie uma nova função para definir permissões específicas que podem ser atribuídas aos perfis.
+                        {% endif %}
+                    </p>
+                </div>
+                
+                {% if form.instance.pk %}
+                    <hr>
+                    <div class="text-center">
+                        <h4 class="text-primary">{{ form.instance.perfis.count }}</h4>
+                        <small class="text-muted">Perfil{{ form.instance.perfis.count|pluralize:"is" }} usando esta função</small>
+                    </div>
+                    
+                    <hr>
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <strong>Criado em:</strong><br>
+                            {{ form.instance.data_criacao|date:"d/m/Y H:i" }}
+                        </small>
+                        <br><br>
+                        <small class="text-muted">
+                            <strong>Última atualização:</strong><br>
+                            {{ form.instance.data_atualizacao|date:"d/m/Y H:i" }}
+                        </small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Dicas -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Dicas</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="bi bi-lightbulb text-warning"></i>
+                        <small>Use códigos únicos e descritivos (ex: USER_CREATE, REPORT_VIEW).</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-lightbulb text-warning"></i>
+                        <small>Nomes claros facilitam a identificação das permissões.</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-lightbulb text-warning"></i>
+                        <small>Funções inativas não aparecem na seleção de perfis.</small>
+                    </li>
+                    {% if form.instance.pk and form.instance.perfis.exists %}
+                        <li>
+                            <i class="bi bi-exclamation-triangle text-warning"></i>
+                            <small>Esta função está sendo usada por {{ form.instance.perfis.count }} perfil{{ form.instance.perfis.count|pluralize:"is" }}.</small>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Adicionar classes do Bootstrap aos campos do formulário
+        const textInputs = document.querySelectorAll('input[type="text"], textarea');
+        textInputs.forEach(function(input) {
+            input.classList.add('form-control');
+        });
+        
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(function(checkbox) {
+            checkbox.classList.add('form-check-input');
+        });
+        
+        // Converter código para maiúsculo e substituir espaços por underscore
+        const codigoField = document.getElementById('id_codigo');
+        if (codigoField) {
+            codigoField.addEventListener('input', function(e) {
+                let value = e.target.value.toUpperCase();
+                value = value.replace(/\s+/g, '_');
+                value = value.replace(/[^A-Z0-9_]/g, '');
+                e.target.value = value;
+            });
+        }
+        
+        // Auto-gerar código baseado no nome
+        const nomeField = document.getElementById('id_nome');
+        if (nomeField && codigoField && !codigoField.value) {
+            nomeField.addEventListener('blur', function(e) {
+                if (!codigoField.value && e.target.value) {
+                    let codigo = e.target.value.toUpperCase();
+                    codigo = codigo.replace(/\s+/g, '_');
+                    codigo = codigo.replace(/[^A-Z0-9_]/g, '');
+                    codigoField.value = codigo;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

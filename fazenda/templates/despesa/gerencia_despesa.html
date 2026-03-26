@@ -1,0 +1,147 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+{% block content_header %}
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+{% endblock %}
+
+{% block title %}
+    SISCau - Sistema de Controle Agrícola
+{% endblock %} 
+
+{% block content %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}    
+
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Despesa</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'despesas' %}">Despesas</a></li>
+              <li class="breadcrumb-item active">{% if editar %}Editar{% else %}Cadastrar{% endif %}</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">{% if editar %}Editar{% else %}Cadastrar{% endif %} Despesa</h3>
+                        </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="card-body">
+                                {% if messages %}
+                                    {% for message in messages %}
+                                        <div class="alert alert-{{ message.tags }}">
+                                            {{ message }}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.fazenda.label }}</label>
+                                            {{ form.fazenda }}
+                                            {% if form.fazenda.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.fazenda.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.categoria.label }}</label>
+                                            {{ form.categoria }}
+                                            {% if form.categoria.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.categoria.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.fonte.label }}</label>
+                                            {{ form.fonte }}
+                                            {% if form.fonte.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.fonte.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.data.label }}</label>
+                                            {{ form.data }}
+                                            {% if form.data.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.data.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.valor.label }}</label>
+                                            {{ form.valor }}
+                                            {% if form.valor.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.valor.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>{{ form.descricao.label }}</label>
+                                            {{ form.descricao }}
+                                            {% if form.descricao.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.descricao.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-footer">
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                                <a href="{% url 'despesas' %}" class="btn btn-default">Cancelar</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+{% endblock%}

@@ -1,0 +1,229 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+{% block title %}
+    SISCau - Sistema de Controle Agrícola
+{% endblock %}
+
+{% block content %}
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Registrar Pagamento</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'financiamentos' %}">Financiamentos</a></li>
+                        <li class="breadcrumb-item"><a href="{% url 'detalhes_financiamento' parcela.financiamento.id %}">{{ parcela.financiamento.item }}</a></li>
+                        <li class="breadcrumb-item active">Pagar Parcela</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">Parcela {{ parcela.numero_parcela }} - {{ parcela.financiamento.item }}</h3>
+                        </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <!-- Exibir erros gerais do formulário -->
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    <h5><i class="icon fas fa-ban"></i> Erro!</h5>
+                                    {% for error in form.non_field_errors %}
+                                        {{ error }}<br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Verificar se há erros em campos obrigatórios -->
+                            {% if form.errors %}
+                                <div class="alert alert-warning">
+                                    <h5><i class="icon fas fa-exclamation-triangle"></i> Atenção!</h5>
+                                    Por favor, preencha todos os campos obrigatórios marcados com <span class="text-danger">*</span>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="card-body">
+                                <!-- Informações da Parcela -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Valor da Parcela:</label>
+                                            <input type="text" class="form-control" value="R$ {{ parcela.valor_parcela|floatformat:2 }}" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Data de Vencimento:</label>
+                                            <input type="text" class="form-control" value="{{ parcela.data_vencimento|date:'d/m/Y' }}" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% if parcela.esta_em_atraso %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Esta parcela está em atraso há {{ parcela.dias_atraso }} dias.
+                                </div>
+                                {% endif %}
+
+                                <!-- Campos do Formulário -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.valor_pago.id_for_label }}">{{ form.valor_pago.label }}:</label>
+                                            {{ form.valor_pago }}
+                                            {% if form.valor_pago.errors %}
+                                                <div class="text-danger">{{ form.valor_pago.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.data_pagamento.id_for_label }}">{{ form.data_pagamento.label }}:</label>
+                                            {{ form.data_pagamento }}
+                                            {% if form.data_pagamento.errors %}
+                                                <div class="text-danger">{{ form.data_pagamento.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.juros_multa.id_for_label }}">{{ form.juros_multa.label }}:</label>
+                                            {{ form.juros_multa }}
+                                            {% if form.juros_multa.errors %}
+                                                <div class="text-danger">{{ form.juros_multa.errors }}</div>
+                                            {% endif %}
+                                            <small class="form-text text-muted">Valor adicional de juros ou multa por atraso</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.status.id_for_label }}">{{ form.status.label }}:</label>
+                                            {{ form.status }}
+                                            {% if form.status.errors %}
+                                                <div class="text-danger">{{ form.status.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="{{ form.observacoes.id_for_label }}">{{ form.observacoes.label }}:</label>
+                                            {{ form.observacoes }}
+                                            {% if form.observacoes.errors %}
+                                                <div class="text-danger">{{ form.observacoes.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save"></i> Registrar Pagamento
+                                </button>
+                                <a href="{% url 'detalhes_financiamento' parcela.financiamento.id %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Resumo do Financiamento -->
+                <div class="col-md-4">
+                    <div class="card card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">Resumo do Financiamento</h3>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Item:</strong> {{ parcela.financiamento.item }}</p>
+                            <p><strong>Instituição:</strong> {{ parcela.financiamento.instituicao_financeira }}</p>
+                            <p><strong>Valor Total:</strong> R$ {{ parcela.financiamento.valor_total|floatformat:2 }}</p>
+                            <p><strong>Parcelas Pagas:</strong> {{ parcela.financiamento.parcelas_pagas }}/{{ parcela.financiamento.numero_parcelas }}</p>
+                            
+                            <div class="progress mt-3">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ parcela.financiamento.percentual_pago }}%" aria-valuenow="{{ parcela.financiamento.percentual_pago }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ parcela.financiamento.percentual_pago|floatformat:1 }}%
+                                </div>
+                            </div>
+                            <small class="text-muted">Progresso do pagamento</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <style>
+        .required-field {
+            border-left: 3px solid #dc3545 !important;
+        }
+        .required-field:focus {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+        }
+        .form-group label .text-danger {
+            font-weight: bold;
+        }
+    </style>
+    
+    <script>
+        // Preencher automaticamente a data de pagamento com a data atual
+        document.addEventListener('DOMContentLoaded', function() {
+            var dataPagamentoField = document.getElementById('id_data_pagamento');
+            if (dataPagamentoField && !dataPagamentoField.value) {
+                var today = new Date();
+                var dd = String(today.getDate()).padStart(2, '0');
+                var mm = String(today.getMonth() + 1).padStart(2, '0');
+                var yyyy = today.getFullYear();
+                dataPagamentoField.value = yyyy + '-' + mm + '-' + dd;
+            }
+
+            // Preencher automaticamente o valor pago com o valor da parcela
+            var valorPagoField = document.getElementById('id_valor_pago');
+            if (valorPagoField && !valorPagoField.value) {
+                valorPagoField.value = '{{ parcela.valor_parcela|floatformat:2 }}';
+            }
+            
+            // Validação em tempo real para campos obrigatórios
+            var requiredFields = document.querySelectorAll('.required-field');
+            requiredFields.forEach(function(field) {
+                field.addEventListener('blur', function() {
+                    var formGroup = this.closest('.form-group');
+                    var errorDiv = formGroup.querySelector('.field-error');
+                    
+                    if (!this.value.trim()) {
+                        if (!errorDiv) {
+                            errorDiv = document.createElement('div');
+                            errorDiv.className = 'text-danger field-error';
+                            errorDiv.innerHTML = '<small>Este campo é obrigatório.</small>';
+                            formGroup.appendChild(errorDiv);
+                        }
+                        this.classList.add('is-invalid');
+                    } else {
+                        if (errorDiv) {
+                            errorDiv.remove();
+                        }
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

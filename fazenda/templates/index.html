@@ -1,0 +1,653 @@
+{% extends 'adminlte/base.html' %} 
+{% load static l10n %} 
+
+{% block title %}
+    SISCau - Sistema de Controle Agrícola
+{% endblock %}
+
+{% block extra_js %}
+    <!-- jQuery -->
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+    <!-- Bootstrap Bundle (Modal) -->
+    <script src="{% static 'plugins/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+    <!-- ChartJS -->
+    <script src="{% static 'plugins/chart.js/Chart.min.js' %}"></script>
+    <script>
+        jQuery(function ($) {
+            // Submeter automaticamente ao trocar o ano
+            $('#anoSelect').on('change', function(){
+                var form = $(this).closest('form');
+                if (form && form.length) { form[0].submit(); }
+            });
+            // Dados para o gráfico de despesas x receitas
+            var meses = {{ meses|safe }};
+            var dadosDespesas = {{ dados_despesas|safe }};
+            var dadosReceitas = {{ dados_receitas|safe }};
+
+            var donutData = {
+            labels: [
+                'Despesas',
+                'Receitas',
+            ],
+            datasets: [
+                {
+                data: [{{ total_despesas_grafico }},{{ total_receitas_grafico }}],
+                backgroundColor : ['rgba(255, 99, 132, 0.8)', 'rgba(75, 192, 192, 0.8)'],
+                }
+            ]
+            }
+            
+            // Configuração do gráfico
+            var ctx = document.getElementById('despesasReceitasChart').getContext('2d');
+            var chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: meses,
+                    datasets: [
+                        {
+                            label: 'Despesas',
+                            backgroundColor: 'rgba(255, 99, 132, 0.8)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                            data: dadosDespesas
+                        },
+                        {
+                            label: 'Receitas',
+                            backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                            data: dadosReceitas
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                callback: function(value, index, values) {
+                                    return 'R$ ' + value.toFixed(2);
+                                }
+                            }
+                        }]
+                    },
+                    tooltips: {
+                        callbacks: {
+                            label: function(tooltipItem, data) {
+                                var label = data.datasets[tooltipItem.datasetIndex].label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += 'R$ ' + parseFloat(tooltipItem.yLabel).toFixed(2);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            });
+
+            //-------------
+            //- PIE CHART -
+            //-------------
+            // Get context with jQuery - using jQuery's .get() method.
+            var pieChartCanvas = $('#pieChart').get(0).getContext('2d')
+            var pieData        = donutData;
+            var pieOptions     = {
+                maintainAspectRatio : false,
+                responsive : true,
+            }
+            //Create pie or douhnut chart
+            // You can switch between pie and douhnut using the method below.
+            new Chart(pieChartCanvas, {
+                type: 'pie',
+                data: pieData,
+                options: pieOptions
+            })
+
+            //-------------
+            //- BAR: DESPESAS POR CATEGORIA -
+            //-------------
+            var despesasCategoriaLabels = {{ despesas_categoria_labels|safe }};
+            var despesasCategoriaValores = {{ despesas_categoria_valores|safe }};
+            var catCtx = document.getElementById('despesasCategoriaChart').getContext('2d');
+            new Chart(catCtx, {
+                type: 'bar',
+                data: {
+                    labels: despesasCategoriaLabels,
+                    datasets: [{
+                        label: 'Despesas por Categoria',
+                        data: despesasCategoriaValores,
+                        backgroundColor: 'rgba(255, 159, 64, 0.8)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                callback: function(value) { return 'R$ ' + parseFloat(value).toFixed(2); }
+                            }
+                        }]
+                    },
+                    tooltips: {
+                        callbacks: {
+                            label: function(tooltipItem, data) {
+                                var label = data.datasets[tooltipItem.datasetIndex].label || '';
+                                if (label) { label += ': '; }
+                                label += 'R$ ' + parseFloat(tooltipItem.yLabel).toFixed(2);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            });
+
+            //-------------
+            //- BAR: DESPESAS POR FONTE -
+            //-------------
+            var despesasFonteLabels = {{ despesas_fonte_labels|safe }};
+            var despesasFonteValores = {{ despesas_fonte_valores|safe }};
+            var fonteCtx = document.getElementById('despesasFonteChart').getContext('2d');
+            new Chart(fonteCtx, {
+                type: 'bar',
+                data: {
+                    labels: despesasFonteLabels,
+                    datasets: [{
+                        label: 'Despesas por Fonte',
+                        data: despesasFonteValores,
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                callback: function(value) { return 'R$ ' + parseFloat(value).toFixed(2); }
+                            }
+                        }]
+                    },
+                    tooltips: {
+                        callbacks: {
+                            label: function(tooltipItem, data) {
+                                var label = data.datasets[tooltipItem.datasetIndex].label || '';
+                                if (label) { label += ': '; }
+                                label += 'R$ ' + parseFloat(tooltipItem.yLabel).toFixed(2);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Modal: abrir e popular ao clicar em uma atividade
+            $('.atividade-item').on('click', function() {
+                var titulo = $(this).data('titulo') || 'Atividade';
+                var descricao = $(this).data('descricao') || '';
+                var atividades = $(this).data('atividades') || '';
+
+                // Corrigir possíveis sequências \u002D vindas de escape incorreto
+                atividades = atividades.replace(/\\u002D/g, '-');
+
+                // Título
+                $('#atividadeModalTitulo').text(titulo);
+
+                // Descrição com quebras de linha preservadas em elementos seguros
+                var $desc = $('#atividadeDescricao');
+                $desc.empty();
+                var linhas = descricao.split(/[\r\n]+/);
+                for (var i = 0; i < linhas.length; i++) {
+                    var linha = linhas[i].trim();
+                    if (linha.length > 0) {
+                        $desc.append($('<p/>').text(linha));
+                    }
+                }
+                if ($desc.children().length === 0 && descricao.trim().length > 0) {
+                    // fallback caso não tenha \n
+                    $desc.append($('<p/>').text(descricao));
+                }
+
+                // Atividades como badges
+                var $det = $('#atividadeDetalhes');
+                $det.empty();
+                var partes = atividades.split(/\s*-\s*|;\s*/);
+                var validos = [];
+                for (var j = 0; j < partes.length; j++) {
+                    var item = partes[j].trim();
+                    if (item.length > 0) { validos.push(item); }
+                }
+
+                if (validos.length > 0) {
+                    for (var k = 0; k < validos.length; k++) {
+                        $det.append($('<span/>', { class: 'badge badge-info mr-1 mb-1', text: validos[k] }));
+                    }
+                    $('#atividadeDetalhesWrapper').show();
+                } else {
+                    $('#atividadeDetalhesWrapper').hide();
+                }
+
+                $('#atividadeModal').modal('show');
+            });
+
+        });
+    </script>
+{% endblock %} 
+
+{% block content %}
+    <div class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1 class="m-0">SisCau - {{ ano_atual }}</h1>
+                </div>
+                <div class="col-sm-6">
+                    <div class="d-flex justify-content-end align-items-center">
+                        <ol class="breadcrumb mb-0 mr-3">
+                            <li class="breadcrumb-item"><a href="#">Início</a></li>
+                            <li class="breadcrumb-item active">Resumo</li>
+                        </ol>
+                        <form method="get" class="form-inline" action="">
+                            <label for="anoSelect" class="mr-2 mb-0">Ano:</label>
+                            <select id="anoSelect" name="ano" class="form-control form-control-sm">
+                                {% for y in anos_disponiveis %}
+                                    <option value="{{ y }}" {% if y == ano_atual %}selected{% endif %}>{{ y }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary ml-2">Ver</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Info boxes -->
+            <div class="row">
+                <div class="col-lg-3 col-4">
+                    <!-- small box -->
+                    <div class="small-box bg-danger">
+                        <div class="inner">
+                            <h3>R$ {{ total_despesas }}</h3>
+                            <p>Despesas ({{ ano_atual }})</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-money-bill-alt"></i>
+                        </div>
+                        <a href="{% url 'despesas' %}" class="small-box-footer">
+                            Mais informações <i class="fas fa-arrow-circle-right"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- ./col -->
+                <div class="col-lg-3 col-4">
+                    <!-- small box -->
+                    <div class="small-box bg-success">
+                        <div class="inner">
+                            <h3>R$ {{ total_receitas }}</h3>
+                            <p>Receitas ({{ ano_atual }})</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <a href="{% url 'colheitas' %}" class="small-box-footer">
+                            Mais informações <i class="fas fa-arrow-circle-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-4">
+                    <!-- small box -->
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h3>R$ {{ total_geral|floatformat:2 }}</h3>
+                            <p>Balancete ({{ ano_atual }})</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <a href="#" class="small-box-footer">
+                            Saldo atual <i class="fas fa-gem"></i>
+                        </a>
+                    </div>
+                </div>
+                <!-- ./col -->
+                <div class="col-lg-3 col-4">
+                    <!-- small box -->
+                    <div class="small-box bg-warning">
+                        <div class="inner">
+                            <h3>{{ total_arrobas|floatformat:2 }}</h3>
+                            <p>Arrobas colhidas ({{ ano_atual }})</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <a href="{% url 'colheitas' %}" class="small-box-footer">
+                            Mais informações <i class="fas fa-arrow-circle-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <!-- ./col -->
+            </div>
+            <!-- /.row -->
+
+            <!-- Info Box Calendário Agrícola -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-outline card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-calendar-alt"></i>
+                                Calendário Agrícola - {{ nome_mes_atual }} de {{ ano_atual }}
+                            </h3>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if atividades_mes_atual %}
+                                <div class="row">
+                                    {% for atividade in atividades_mes_atual %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="info-box bg-light atividade-item" style="cursor:pointer"
+                                                data-titulo="{{ atividade.cultura.nome|default:'Atividade'|escape }}"
+                                                data-descricao="{{ atividade.descricao|default:''|escape }}"
+                                                data-atividades="{{ atividade.atividades|default:''|escape }}">
+                                                <span class="info-box-icon bg-success">
+                                                    <i class="fas fa-seedling"></i>
+                                                </span>
+                                                <div class="info-box-content">
+                                                    <span class="info-box-text">{{ atividade.cultura.nome }}</span>
+                                                    <span class="info-box-number">{{ atividade.descricao|truncatechars:50 }}</span>
+                                                    {% if atividade.atividades %}
+                                                        <div class="progress">
+                                                            <div class="progress-bar bg-success" style="width: 100%"></div>
+                                                        </div>
+                                                        <span class="progress-description">
+                                                            <small>{{ atividade.atividades|truncatechars:80 }}</small>
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="text-center">
+                                    <a href="{% url 'calendarios' %}" class="btn btn-primary">
+                                        <i class="fas fa-calendar-alt"></i> Ver Calendário Completo
+                                    </a>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <h5><i class="icon fas fa-info"></i> Informação!</h5>
+                                    Não há atividades cadastradas para o mês de {{ nome_mes_atual }}.
+                                    <a href="{% url 'cadastrar_calendario' %}" class="btn btn-sm btn-primary ml-2">
+                                        <i class="fas fa-plus"></i> Cadastrar Atividade
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.row -->
+
+            <!-- Widget de Financiamentos -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-outline card-warning">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-credit-card"></i>
+                                Financiamentos Ativos
+                            </h3>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if financiamentos_ativos %}
+                                <div class="row">
+                                    {% for financiamento in financiamentos_ativos %}
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="card card-outline card-primary">
+                                                <div class="card-header">
+                                                    <h5 class="card-title">{{ financiamento.item|truncatechars:30 }}</h5>
+                                                    <div class="card-tools">
+                                                        <span class="badge badge-primary">{{ financiamento.get_tipo_display }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <div class="description-block border-right">
+                                                                <span class="description-percentage text-success">
+                                                                    <i class="fas fa-caret-up"></i> {{ financiamento.percentual_pago|floatformat:1 }}%
+                                                                </span>
+                                                                <h5 class="description-header">R$ {{ financiamento.valor_pago|floatformat:2 }}</h5>
+                                                                <span class="description-text">PAGO</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="description-block">
+                                                                <span class="description-percentage text-warning">
+                                                                    <i class="fas fa-caret-down"></i> {{ financiamento.percentual_pendente|floatformat:1 }}%
+                                                                </span>
+                                                                <h5 class="description-header">R$ {{ financiamento.valor_pendente|floatformat:2 }}</h5>
+                                                                <span class="description-text">PENDENTE</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="progress mt-3">
+                                                        <div class="progress-bar bg-success" role="progressbar" 
+                                                             style="width: {{ financiamento.percentual_pago }}%" 
+                                                             aria-valuenow="{{ financiamento.percentual_pago }}" 
+                                                             aria-valuemin="0" aria-valuemax="100">
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="mt-2">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-university"></i> {{ financiamento.instituicao_financeira|truncatechars:20 }}
+                                                        </small>
+                                                        <br>
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-list-ol"></i> {{ financiamento.parcelas_pagas }}/{{ financiamento.numero_parcelas }} parcelas
+                                                        </small>
+                                                        <br>
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-percentage"></i> {{ financiamento.taxa_juros }}% a.m.
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                                <div class="card-footer">
+                                                    <div class="row">
+                                                        <div class="col-6">
+                                                            <a href="{% url 'detalhes_financiamento' financiamento.id %}" 
+                                                               class="btn btn-primary btn-sm btn-block">
+                                                                <i class="fas fa-eye"></i> Detalhes
+                                                            </a>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <a href="{% url 'editar_financiamento' financiamento.id %}" 
+                                                               class="btn btn-warning btn-sm btn-block">
+                                                                <i class="fas fa-edit"></i> Editar
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="text-center">
+                                    <a href="{% url 'financiamentos' %}" class="btn btn-primary">
+                                        <i class="fas fa-credit-card"></i> Ver Todos os Financiamentos
+                                    </a>
+                                    <a href="{% url 'cadastrar_financiamento' %}" class="btn btn-success">
+                                        <i class="fas fa-plus"></i> Novo Financiamento
+                                    </a>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <h5><i class="icon fas fa-info"></i> Informação!</h5>
+                                    Não há financiamentos ativos no momento.
+                                    <a href="{% url 'cadastrar_financiamento' %}" class="btn btn-sm btn-success ml-2">
+                                        <i class="fas fa-plus"></i> Cadastrar Financiamento
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.row -->
+
+            <!-- Gráfico de Despesas x Receitas -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card card-outline card-info">
+                        <div class="card-header">
+                            <h5 class="card-title">Despesas x Receitas ({{ ano_atual }})</h5>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <button type="button" class="btn btn-tool" data-card-widget="remove">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- /.card-header -->
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="chart">
+                                        <canvas id="despesasReceitasChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- /.row -->
+                        </div>
+                        <!-- ./card-body -->
+                    </div>
+                    <!-- /.card -->
+                </div>
+                <div class="col-md-6">
+                    <div class="card card-outline card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">Balancete ({{ ano_atual }})</h3>
+
+                            <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <button type="button" class="btn btn-tool" data-card-widget="remove">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            </div>
+                        </div>
+                        <div class="card-body"><div class="chartjs-size-monitor"><div class="chartjs-size-monitor-expand"><div class=""></div></div><div class="chartjs-size-monitor-shrink"><div class=""></div></div></div>
+                            <canvas id="pieChart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%; display: block; width: 495px;" width="495" height="250" class="chartjs-render-monitor"></canvas>
+                        </div>
+                        <!-- /.card-body -->
+                        </div>
+                </div>
+                <!-- /.col -->
+            </div>
+            <!-- /.row -->
+
+            <!-- Gráfico de Despesas por Categoria -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-outline card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">Despesas por Categoria ({{ ano_atual }})</h3>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <button type="button" class="btn btn-tool" data-card-widget="remove">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="despesasCategoriaChart" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.row -->
+
+            <!-- Gráfico de Despesas por Fonte -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-outline card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">Despesas por Fonte ({{ ano_atual }})</h3>
+                            <div class="card-tools">
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <button type="button" class="btn btn-tool" data-card-widget="remove">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="despesasFonteChart" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.row -->
+        </div>
+    </section>
+
+            <!-- Modal: Detalhes da Atividade do Calendário Agrícola -->
+            <div class="modal fade" id="atividadeModal" tabindex="-1" role="dialog" aria-labelledby="atividadeModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="atividadeModalLabel">
+                                <i class="fas fa-seedling mr-2"></i> <span id="atividadeModalTitulo">Atividade</span>
+                            </h5>
+                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Fechar">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <h6 class="mb-2"><i class="fas fa-align-left mr-1"></i> Descrição</h6>
+                                <div id="atividadeDescricao"></div>
+                            </div>
+                            <div id="atividadeDetalhesWrapper" style="display:none;">
+                                <hr>
+                                <h6 class="mb-2"><i class="fas fa-tasks mr-1"></i> Atividades</h6>
+                                <div id="atividadeDetalhes" class="d-flex flex-wrap"></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}

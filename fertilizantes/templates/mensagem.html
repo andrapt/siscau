@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Olá {{nome}}</h1>
+
+    <ul>
+        {% for fertilizante in fertilizantes %}
+            <li>{{ fertilizante }}</li>
+        {% endfor %}
+    </ul>
+
+    {% if saudacao == "Bom dia" %}
+        <p>Tenha um ótimo dia!</p>
+    {% elif saudacao == "Boa tarde" %}
+        <p>Espero que sua tarde seja produtiva!</p>
+    {% else %}
+        <p>Tenha uma boa noite de descanso!</p>
+    {% endif %}
+{% endblock%}

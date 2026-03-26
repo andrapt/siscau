@@ -1,0 +1,202 @@
+{% extends 'usuarios/base.html' %}
+
+{% block title %}Usuários{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Usuários</h1>
+    <a href="{% url 'usuarios:usuario_create' %}" class="btn btn-primary btn-sm shadow-sm">
+        <i class="bi bi-person-plus"></i> Novo Usuário
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="nome" class="form-label">Nome</label>
+                <input type="text" class="form-control" id="nome" name="nome" value="{{ request.GET.nome }}" placeholder="Digite o nome">
+            </div>
+            <div class="col-md-3">
+                <label for="cargo" class="form-label">Cargo</label>
+                <input type="text" class="form-control" id="cargo" name="cargo" value="{{ request.GET.cargo }}" placeholder="Digite o cargo">
+            </div>
+            <div class="col-md-2">
+                <label for="departamento" class="form-label">Departamento</label>
+                <input type="text" class="form-control" id="departamento" name="departamento" value="{{ request.GET.departamento }}" placeholder="Departamento">
+            </div>
+            <div class="col-md-2">
+                <label for="ativo" class="form-label">Status</label>
+                <select class="form-select" id="ativo" name="ativo">
+                    <option value="">Todos</option>
+                    <option value="True" {% if request.GET.ativo == 'True' %}selected{% endif %}>Ativo</option>
+                    <option value="False" {% if request.GET.ativo == 'False' %}selected{% endif %}>Inativo</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{% url 'usuarios:usuario_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Limpar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Usuários -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Lista de Usuários ({{ page_obj.paginator.count }} encontrado{{ page_obj.paginator.count|pluralize }})</h6>
+    </div>
+    <div class="card-body">
+        {% if page_obj %}
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Cargo</th>
+                            <th>Departamento</th>
+                            <th>Sistemas</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in page_obj %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle me-2">
+                                        {{ usuario.user.first_name|first|upper }}{{ usuario.user.last_name|first|upper }}
+                                    </div>
+                                    <div>
+                                        <strong>{{ usuario.nome_completo }}</strong>
+                                        {% if usuario.telefone %}
+                                            <br><small class="text-muted">{{ usuario.telefone }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ usuario.user.email|default:"-" }}</td>
+                            <td>{{ usuario.cargo|default:"-" }}</td>
+                            <td>{{ usuario.departamento|default:"-" }}</td>
+                            <td>
+                                <span class="badge bg-primary">{{ usuario.sistemas_acesso.count }}</span>
+                            </td>
+                            <td>
+                                {% if usuario.ativo %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'usuarios:usuario_detail' usuario.pk %}" class="btn btn-info btn-sm" title="Visualizar">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'usuarios:usuario_edit' usuario.pk %}" class="btn btn-warning btn-sm" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'usuarios:usuario_sistema_create' %}?usuario={{ usuario.pk }}" class="btn btn-success btn-sm" title="Gerenciar Acesso">
+                                        <i class="bi bi-key"></i>
+                                    </a>
+                                    {% if usuario.ativo %}
+                                        <a href="{% url 'usuarios:usuario_toggle_status' usuario.pk %}" class="btn btn-outline-danger btn-sm" title="Desativar Usuário">
+                                            <i class="bi bi-person-dash"></i>
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'usuarios:usuario_toggle_status' usuario.pk %}" class="btn btn-outline-success btn-sm" title="Ativar Usuário">
+                                            <i class="bi bi-person-check"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Paginação -->
+            {% if page_obj.has_other_pages %}
+                <nav aria-label="Navegação de páginas">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-people display-1 text-muted"></i>
+                <h4 class="text-muted mt-3">Nenhum usuário encontrado</h4>
+                <p class="text-muted">Não há usuários cadastrados ou que atendam aos filtros aplicados.</p>
+                <a href="{% url 'usuarios:usuario_create' %}" class="btn btn-primary">
+                    <i class="bi bi-person-plus"></i> Cadastrar Primeiro Usuário
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+</style>
+{% endblock %}

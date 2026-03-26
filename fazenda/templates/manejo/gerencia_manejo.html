@@ -1,0 +1,231 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+{% block content_header %}
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+    <script>
+        $(document).ready(function() {
+            function calcularCustoTotal() {
+                var custoMaterial = parseFloat($('#id_custoMaterial').val()) || 0;
+                var custoMaoObra = parseFloat($('#id_custoMaoObra').val()) || 0;
+                var custoTotal = custoMaterial + custoMaoObra;
+                $('#custoTotal').val(custoTotal.toFixed(2));
+            }
+            
+            $('#id_custoMaterial, #id_custoMaoObra').on('input', function() {
+                calcularCustoTotal();
+            });
+            
+            // Calcular inicialmente
+            calcularCustoTotal();
+        });
+    </script>
+{% endblock %}
+
+{% block title %}
+    SISCau - Sistema de Controle Agrícola
+{% endblock %}
+
+{% block content %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}    
+
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Manejo</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'manejos' %}">Manejos</a></li>
+                        <li class="breadcrumb-item active">{% if editar %}Editar{% else %}Cadastrar{% endif %}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">{% if editar %}Editar{% else %}Cadastrar{% endif %} Manejo</h3>
+                        </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="card-body">
+                                {% if messages %}
+                                    {% for message in messages %}
+                                        <div class="alert alert-{{ message.tags }}">
+                                            {{ message }}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.quadra.label }}</label>
+                                            {{ form.quadra }}
+                                            {% if form.quadra.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.quadra.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.tipoAtividade.label }}</label>
+                                            {{ form.tipoAtividade }}
+                                            {% if form.tipoAtividade.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.tipoAtividade.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.insumo.label }}</label>
+                                            {{ form.insumo }}
+                                            {% if form.insumo.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.insumo.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.dataInicio.label }}</label>
+                                            {{ form.dataInicio }}
+                                            {% if form.dataInicio.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.dataInicio.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.dataFim.label }}</label>
+                                            {{ form.dataFim }}
+                                            {% if form.dataFim.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.dataFim.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.responsavel.label }}</label>
+                                            {{ form.responsavel }}
+                                            {% if form.responsavel.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.responsavel.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>{{ form.custoMaterial.label }}</label>
+                                            {{ form.custoMaterial }}
+                                            {% if form.custoMaterial.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.custoMaterial.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>{{ form.custoMaoObra.label }}</label>
+                                            {{ form.custoMaoObra }}
+                                            {% if form.custoMaoObra.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.custoMaoObra.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Custo Total (R$)</label>
+                                            <input type="text" id="custoTotal" class="form-control" readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.dose.label }}</label>
+                                            {{ form.dose }}
+                                            {% if form.dose.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.dose.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.unidade.label }}</label>
+                                            {{ form.unidade }}
+                                            {% if form.unidade.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.unidade.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>{{ form.descricao.label }}</label>
+                                            {{ form.descricao }}
+                                            {% if form.descricao.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.descricao.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-footer">
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                                <a href="{% url 'manejos' %}" class="btn btn-default">Cancelar</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+{% endblock%}

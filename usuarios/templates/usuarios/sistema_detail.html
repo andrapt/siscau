@@ -1,0 +1,239 @@
+{% extends 'usuarios/base.html' %}
+
+{% block title %}{{ sistema.nome }} - Detalhes{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Detalhes do Sistema</h1>
+    <div>
+        <a href="{% url 'usuarios:sistema_list' %}" class="btn btn-secondary btn-sm shadow-sm me-2">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+        <a href="{% url 'usuarios:sistema_update' sistema.pk %}" class="btn btn-warning btn-sm shadow-sm me-2">
+            <i class="bi bi-pencil"></i> Editar
+        </a>
+        <a href="{% url 'usuarios:sistema_delete' sistema.pk %}" class="btn btn-danger btn-sm shadow-sm" onclick="return confirm('Tem certeza que deseja excluir este sistema?')">
+            <i class="bi bi-trash"></i> Excluir
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Informações Básicas -->
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Informações Básicas</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Nome:</strong>
+                        <p class="text-gray-800">{{ sistema.nome }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Status:</strong>
+                        <p>
+                            {% if sistema.ativo %}
+                                <span class="badge bg-success">Ativo</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inativo</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <strong>Descrição:</strong>
+                        <p class="text-gray-800">{{ sistema.descricao|default:"Sem descrição" }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Data de Criação:</strong>
+                        <p class="text-gray-800">{{ sistema.data_criacao|date:"d/m/Y H:i:s" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Última Atualização:</strong>
+                        <p class="text-gray-800">{{ sistema.data_atualizacao|date:"d/m/Y H:i:s" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Estatísticas -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Estatísticas</h6>
+            </div>
+            <div class="card-body text-center">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="border-right">
+                            <h4 class="text-primary">{{ sistema.perfis.count }}</h4>
+                            <small class="text-muted">Perfil{{ sistema.perfis.count|pluralize:"is" }}</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">{{ sistema.usuarios_acesso.count }}</h4>
+                        <small class="text-muted">Usuário{{ sistema.usuarios_acesso.count|pluralize }}</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="border-right">
+                            <h4 class="text-info">{{ total_funcoes }}</h4>
+                            <small class="text-muted">Funções</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning">{{ perfis_ativos }}</h4>
+                        <small class="text-muted">Perfis Ativos</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Perfis do Sistema -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Perfis do Sistema</h6>
+        <a href="{% url 'usuarios:perfil_create' %}?sistema={{ sistema.pk }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle"></i> Novo Perfil
+        </a>
+    </div>
+    <div class="card-body">
+        {% if sistema.perfis.all %}
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Descrição</th>
+                            <th>Funções</th>
+                            <th>Usuários</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for perfil in sistema.perfis.all %}
+                        <tr>
+                            <td><strong>{{ perfil.nome }}</strong></td>
+                            <td>{{ perfil.descricao|truncatechars:50|default:"-" }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ perfil.funcoes.count }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary">{{ perfil.usuarios_sistema.count }}</span>
+                            </td>
+                            <td>
+                                {% if perfil.ativo %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'usuarios:perfil_detail' perfil.pk %}" class="btn btn-info btn-sm" title="Visualizar">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'usuarios:perfil_update' perfil.pk %}" class="btn btn-warning btn-sm" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-person-badge display-4 text-muted"></i>
+                <h5 class="text-muted mt-3">Nenhum perfil cadastrado</h5>
+                <p class="text-muted">Este sistema ainda não possui perfis cadastrados.</p>
+                <a href="{% url 'usuarios:perfil_create' %}?sistema={{ sistema.pk }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Cadastrar Primeiro Perfil
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Usuários com Acesso -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-primary">Usuários com Acesso</h6>
+        <a href="{% url 'usuarios:usuario_sistema_create' %}?sistema={{ sistema.pk }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-key-fill"></i> Conceder Acesso
+        </a>
+    </div>
+    <div class="card-body">
+        {% if usuarios_sistema %}
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Perfil</th>
+                            <th>Status</th>
+                            <th>Data Acesso</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario_sistema in usuarios_sistema %}
+                        <tr>
+                            <td>
+                                <strong>{{ usuario_sistema.usuario.nome_completo }}</strong><br>
+                                <small class="text-muted">{{ usuario_sistema.usuario.cargo|default:"Sem cargo" }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ usuario_sistema.perfil.nome }}</span>
+                            </td>
+                            <td>
+                                {% if usuario_sistema.ativo %}
+                                    <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ usuario_sistema.data_criacao|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'usuarios:usuario_detail' usuario_sistema.usuario.pk %}" class="btn btn-info btn-sm" title="Ver Usuário">
+                                        <i class="bi bi-person"></i>
+                                    </a>
+                                    <a href="{% url 'usuarios:usuario_sistema_update' usuario_sistema.pk %}" class="btn btn-warning btn-sm" title="Editar Acesso">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'usuarios:usuario_sistema_delete' usuario_sistema.pk %}" class="btn btn-danger btn-sm" title="Remover Acesso" onclick="return confirm('Tem certeza que deseja remover o acesso deste usuário?')">
+                                        <i class="bi bi-x-circle"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-people display-4 text-muted"></i>
+                <h5 class="text-muted mt-3">Nenhum usuário com acesso</h5>
+                <p class="text-muted">Este sistema ainda não possui usuários com acesso.</p>
+                <a href="{% url 'usuarios:usuario_sistema_create' %}?sistema={{ sistema.pk }}" class="btn btn-primary">
+                    <i class="bi bi-key-fill"></i> Conceder Primeiro Acesso
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

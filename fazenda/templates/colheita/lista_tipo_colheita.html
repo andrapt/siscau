@@ -1,0 +1,159 @@
+{% extends 'adminlte/base.html' %}
+{% load static %} 
+
+{% block content_header %}
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'fazenda/js/fazenda.js' %}"></script>
+{% endblock %}
+
+
+{% block title %}
+    SISCau - Sistema de Controle Agrícola
+{% endblock %} 
+
+{% block content %} 
+    <div class="app-content-top-area">
+          <!--begin::Container-->
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-11">
+              </div>
+
+              <div class="col-md-1 text-end">
+                <a href="{% url 'cadastrar_tipo_colheita' %}" class="btn btn-success btn-sm" name="save" value="create">
+                  Cadastrar
+                </a>
+              </div>
+            </div>
+          </div>
+          <!--end::Container-->
+    </div>
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Tipo de Colheita</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">Listar</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+
+        <div class="container-fluid">
+            <div class="card">
+              <!-- /.card-header -->
+              <div class="card-body">
+                <div id="example1_wrapper" class="dataTables_wrapper dt-bootstrap4">
+                    <div class="card-header">
+                <h3 class="card-title">Lista de tipo de colheitas</h3>
+                
+                <div class="card-tools">
+                  <div class="input-group input-group-sm" style="width: 150px;">
+                    <form method="GET" id="formPesquisar">
+                      <div class="input-group input-group-sm">
+                        <input type="text" class="form-control" id="search" name="search" placeholder="Pesquisar" value="{{ request.GET.search }}">
+                        <span class="input-group-append">
+                          <button type="button" id="btnPesqusiar" class="btn btn-info btn-flat"><i class="fas fa-search"></i> </button>
+                        </span>
+                      </div>                                          
+                    </form>
+                  </div>
+                </div>
+              </div>
+                    
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <table id="example1" class="table table-bordered dataTable table-hover" aria-describedby="example1_info">
+                    <thead>
+                     <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Ações</th>
+                     </tr>
+                    </thead>
+                  <tbody>
+                      {% for tipoColheita in tipoColheitas %}
+                        <tr>
+                            <td>{{ tipoColheita.id }}</td>
+                            <td><a href="{% url 'informar' id=tipoColheita.id %}"> {{ tipoColheita.nome }}</a> </td>                            
+                            <td> <a href="{% url 'editar_tipo_colheita' id=tipoColheita.id %}" class="btn btn-primary btn-sm">Editar</a> 
+                             <a href="{% url 'excluir_tipo_colheita' id=tipoColheita.id %}" class="delete-btn btn btn-danger btn-sm">Excluir</a></td>
+                        </tr>
+                      {% endfor %} 
+                  </tbody>
+                  
+                </table>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12 col-md-5">
+                <div class="dataTables_info" id="example1_info" role="status" aria-live="polite">
+                    {{ tipoColheitas.number }} de {{ tipoColheitas.paginator.num_pages }}
+                </div>
+            </div>
+            <div class="col-sm-12 col-md-7">
+                <div class="dataTables_paginate paging_simple_numbers" id="example1_paginate">
+                    <ul class="pagination">
+                        {% if tipoColheitas.has_previous %}
+                          <li class="paginate_button page-item previous" id="example1_previous">
+                              <a href="?page={{tipoColheitas.previous_page_number}}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-controls="example1" data-dt-idx="0" tabindex="0" class="page-link">Anterior</a>
+                          </li>
+                        {% else %}
+                          <li class="paginate_button page-item previous disabled" id="example1_previous">
+                              <a href="#" aria-controls="example1" data-dt-idx="0" tabindex="0" class="page-link">Anterior</a>
+                          </li>
+                        {% endif %}
+                        
+                        {% for i in tipoColheitas.paginator.page_range %}
+                            {% if tipoColheitas.number == i %}
+                              <li class="paginate_button page-item active">
+                                  <a href="#" aria-controls="example1" data-dt-idx="1" tabindex="0" class="page-link">{{ i }}</a>
+                              </li>
+                            {% elif i > tipoColheitas.number|add:'-5' and i < tipoColheitas.number|add:'5' %}
+                              <li class="paginate_button page-item">
+                                  <a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-controls="example1" data-dt-idx="2" tabindex="0" class="page-link">{{ i }}</a>
+                              </li>                                
+                            {% endif %}
+                        {% endfor %}                        
+                        
+                        {% if tipoColheitas.has_next %}
+                          <li class="paginate_button page-item next" id="example1_next">
+                              <a href="?page={{tipoColheitas.next_page_number}}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-controls="example1" data-dt-idx="0" tabindex="0" class="page-link">Próximo</a>
+                          </li>
+                        {% else %}
+                          <li class="paginate_button page-item next disabled" id="example1_next">
+                              <a href="#" aria-controls="example1" data-dt-idx="0" tabindex="0" class="page-link">Próximo</a>
+                          </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+              </div>
+              <!-- /.card-body -->
+            </div>
+        </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Adiciona evento de clique ao botão de pesquisa
+        document.getElementById('btnPesqusiar').addEventListener('click', function() {
+            document.getElementById('formPesquisar').submit();
+        });
+
+        // Adiciona evento de tecla Enter no campo de pesquisa
+        document.getElementById('search').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('formPesquisar').submit();
+            }
+        });
+       
+    });
+</script>
+{% endblock %}

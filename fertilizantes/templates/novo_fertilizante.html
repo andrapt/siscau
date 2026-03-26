@@ -1,0 +1,10 @@
+{% extends 'adminlte/base.html' %}
+
+{% block content %}
+    <h1>{% if editar %}Editar {% else %} Novo {%endif%} Fertilizante</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Salvar</button>
+    </form>
+{% endblock%}

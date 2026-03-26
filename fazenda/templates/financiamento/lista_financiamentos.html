@@ -1,0 +1,154 @@
+{% extends 'adminlte/base.html' %}
+{% load static %} 
+
+{% block content_header %}
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'fazenda/js/fazenda.js' %}"></script>
+{% endblock %}
+
+{% block title %}
+    SISCau - Sistema de Controle Agrícola
+{% endblock %} 
+
+{% block content %} 
+    <div class="app-content-top-area">
+          <!--begin::Container-->
+          <div class="container-fluid">
+            <div class="row">
+              <div class="col-md-11">
+              </div>
+
+              <div class="col-md-1 text-end">
+                <a href="{% url 'cadastrar_financiamento' %}" class="btn btn-success btn-sm" name="save" value="create">
+                  Cadastrar
+                </a>
+              </div>
+            </div>
+          </div>
+          <!--end::Container-->
+    </div>
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Financiamentos</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item">Listar</li>
+            </ol>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+
+    <div class="container-fluid">
+        <div class="card">
+          <!-- /.card-header -->
+          <div class="card-body">
+            <!-- Formulário de pesquisa -->
+            <form method="GET" class="mb-3">
+              <div class="row">
+                <div class="col-md-10">
+                  <input type="text" name="search" class="form-control" placeholder="Pesquisar por item/equipamento..." value="{{ search }}">
+                </div>
+                <div class="col-md-2">
+                  <button type="submit" class="btn btn-primary">Pesquisar</button>
+                </div>
+              </div>
+            </form>
+
+            <table id="example1" class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Item/Equipamento</th>
+                  <th>Tipo</th>
+                  <th>Valor Total</th>
+                  <th>Valor Financiado</th>
+                  <th>Instituição</th>
+                  <th>Parcelas</th>
+                  <th>Status</th>
+                  <th>Progresso</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for financiamento in page_obj %}
+                <tr>
+                  <td>{{ financiamento.id }}</td>
+                  <td>{{ financiamento.item }}</td>
+                  <td>{{ financiamento.get_tipo_display }}</td>
+                  <td>{{ financiamento.valor_total }}</td>
+                  <td>{{ financiamento.valor_financiado }}</td>
+                  <td>{{ financiamento.instituicao_financeira }}</td>
+                  <td>{{ financiamento.parcelas_pagas }}/{{ financiamento.numero_parcelas }}</td>
+                  <td>
+                    <span class="badge badge-{% if financiamento.status == 'ATIVO' %}success{% elif financiamento.status == 'QUITADO' %}primary{% else %}warning{% endif %}">
+                      {{ financiamento.get_status_display }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="progress">
+                      <div class="progress-bar bg-success" role="progressbar" style="width: {{ financiamento.percentual_pago }}%" aria-valuenow="{{ financiamento.percentual_pago }}" aria-valuemin="0" aria-valuemax="100">
+                        {{ financiamento.percentual_pago|floatformat:1 }}%
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <a href="{% url 'detalhes_financiamento' financiamento.id %}" class="btn btn-info btn-sm" title="Ver Detalhes">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{% url 'editar_financiamento' financiamento.id %}" class="btn btn-warning btn-sm" title="Editar">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{% url 'excluir_financiamento' financiamento.id %}" class="btn btn-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este financiamento?')">
+                      <i class="fas fa-trash"></i>
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="10" class="text-center">Nenhum financiamento encontrado.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+            <!-- Paginação -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Page navigation">
+              <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}">&laquo; Primeira</a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">Anterior</a>
+                  </li>
+                {% endif %}
+
+                <li class="page-item active">
+                  <span class="page-link">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                  </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}">Próxima</a>
+                  </li>
+                  <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}">Última &raquo;</a>
+                  </li>
+                {% endif %}
+              </ul>
+            </nav>
+            {% endif %}
+
+          </div>
+          <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+    </div>
+{% endblock %}

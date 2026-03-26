@@ -1,0 +1,26 @@
+{% extends 'adminlte/base.html' %}
+{% load static %} 
+
+{% block title %}
+    SISCau - Sistema de Controle Agrícola
+{% endblock %} 
+
+{% block content %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+Lista de Ferilizantes
+    {% for fertilizante in fertilizantes %}
+        <div class="fertilizante">
+            <a href="{% url 'informar' id=fertilizante.id %}"> {{ fertilizante.nome }}</a> 
+            | 
+            <a href="{% url 'editar_fertilizante' id=fertilizante.id %}">Editar</a>
+            {% comment %} <p>Tipo: {{ fertilizante.tipo_fertilizante.nome }}</p> {% endcomment %}
+            {% comment %} <p>Linha: {{ fertilizante.linha }}</p> {% endcomment %}
+        </div>
+    {% endfor %}
+{% endblock%}

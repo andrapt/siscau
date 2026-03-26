@@ -1,0 +1,230 @@
+{% extends 'usuarios/base.html' %}
+
+{% block content %}
+<div class="row">
+    <!-- Cards de Estatísticas -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2 card-stats">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Usuários Ativos
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_usuarios }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2" style="border-left: 4px solid #28a745;">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Sistemas
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_sistemas }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-gear fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2" style="border-left: 4px solid #17a2b8;">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Perfis
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_perfis }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-person-badge fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2" style="border-left: 4px solid #ffc107;">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Funções
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_funcoes }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-list-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Últimos Usuários Criados -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Últimos Usuários Criados</h6>
+                <a href="{% url 'usuarios:usuario_list' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-eye"></i> Ver Todos
+                </a>
+            </div>
+            <div class="card-body">
+                {% if ultimos_usuarios %}
+                    <div class="list-group list-group-flush">
+                        {% for usuario in ultimos_usuarios %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ usuario.nome_completo }}</h6>
+                                    <p class="mb-1 text-muted small">{{ usuario.cargo|default:"Sem cargo" }}</p>
+                                    <small class="text-muted">{{ usuario.data_criacao|date:"d/m/Y H:i" }}</small>
+                                </div>
+                                <a href="{% url 'usuarios:usuario_detail' usuario.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Nenhum usuário encontrado.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sistemas Mais Utilizados -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">Sistemas Mais Utilizados</h6>
+                <a href="{% url 'usuarios:sistema_list' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-eye"></i> Ver Todos
+                </a>
+            </div>
+            <div class="card-body">
+                {% if sistemas_populares %}
+                    <div class="list-group list-group-flush">
+                        {% for sistema in sistemas_populares %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ sistema.nome }}</h6>
+                                    <p class="mb-1 text-muted small">{{ sistema.descricao|truncatechars:50|default:"Sem descrição" }}</p>
+                                    <small class="text-muted">{{ sistema.usuarios_acesso.count }} usuário{{ sistema.usuarios_acesso.count|pluralize }}</small>
+                                </div>
+                                <span class="badge bg-primary rounded-pill">{{ sistema.perfis.count }} perfil{{ sistema.perfis.count|pluralize:"is" }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Nenhum sistema encontrado.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Ações Rápidas</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'usuarios:usuario_create' %}" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-person-plus"></i><br>
+                            Novo Usuário
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'usuarios:sistema_create' %}" class="btn btn-success btn-lg w-100">
+                            <i class="bi bi-gear-fill"></i><br>
+                            Novo Sistema
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'usuarios:perfil_create' %}" class="btn btn-info btn-lg w-100">
+                            <i class="bi bi-person-badge-fill"></i><br>
+                            Novo Perfil
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'usuarios:usuario_sistema_create' %}" class="btn btn-warning btn-lg w-100">
+                            <i class="bi bi-key-fill"></i><br>
+                            Novo Acesso
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estatísticas Adicionais -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Resumo Geral</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-2">
+                        <div class="border-right">
+                            <h4 class="text-primary">{{ total_acessos }}</h4>
+                            <small class="text-muted">Acessos Ativos</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="border-right">
+                            <h4 class="text-success">{{ total_usuarios }}</h4>
+                            <small class="text-muted">Usuários</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="border-right">
+                            <h4 class="text-info">{{ total_sistemas }}</h4>
+                            <small class="text-muted">Sistemas</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="border-right">
+                            <h4 class="text-warning">{{ total_perfis }}</h4>
+                            <small class="text-muted">Perfis</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="border-right">
+                            <h4 class="text-danger">{{ total_funcoes }}</h4>
+                            <small class="text-muted">Funções</small>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <h4 class="text-secondary">100%</h4>
+                        <small class="text-muted">Sistema Ativo</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

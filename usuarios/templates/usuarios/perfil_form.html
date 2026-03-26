@@ -1,0 +1,401 @@
+{% extends 'usuarios/base.html' %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        Editar Perfil - {{ form.instance.nome }}
+    {% else %}
+        Novo Perfil
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">
+        {% if form.instance.pk %}
+            Editar Perfil
+        {% else %}
+            Novo Perfil
+        {% endif %}
+    </h1>
+    <a href="{% url 'usuarios:perfil_list' %}" class="btn btn-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    {% if form.instance.pk %}
+                        Editar Informações do Perfil
+                    {% else %}
+                        Informações do Novo Perfil
+                    {% endif %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Dados Básicos -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.nome.id_for_label }}" class="form-label">
+                                {{ form.nome.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.nome }}
+                            {% if form.nome.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.nome.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.sistema.id_for_label }}" class="form-label">
+                                {{ form.sistema.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.sistema }}
+                            {% if form.sistema.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.sistema.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.descricao.id_for_label }}" class="form-label">
+                            {{ form.descricao.label }}
+                        </label>
+                        {{ form.descricao }}
+                        {% if form.descricao.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.descricao.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Descreva brevemente as responsabilidades deste perfil.</div>
+                    </div>
+                    
+                    <!-- Funções -->
+                    <div class="mb-3">
+                        <label for="{{ form.funcoes.id_for_label }}" class="form-label">
+                            {{ form.funcoes.label }}
+                            <span class="text-danger">*</span>
+                        </label>
+                        <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                            {{ form.funcoes }}
+                        </div>
+                        {% if form.funcoes.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.funcoes.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Selecione as funções que este perfil terá acesso.</div>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.ativo }}
+                            <label class="form-check-label" for="{{ form.ativo.id_for_label }}">
+                                {{ form.ativo.label }}
+                            </label>
+                        </div>
+                        {% if form.ativo.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.ativo.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Perfis inativos não podem ser atribuídos a usuários.</div>
+                    </div>
+                    
+                    <!-- Botões -->
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i>
+                                {% if form.instance.pk %}
+                                    Atualizar Perfil
+                                {% else %}
+                                    Criar Perfil
+                                {% endif %}
+                            </button>
+                            <a href="{% url 'usuarios:perfil_list' %}" class="btn btn-secondary ms-2">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                        </div>
+                        {% if form.instance.pk %}
+                            <div>
+                                <a href="{% url 'usuarios:perfil_detail' form.instance.pk %}" class="btn btn-info me-2">
+                                    <i class="bi bi-eye"></i> Visualizar
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Informações Adicionais -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Informações</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    {% if form.instance.pk %}
+                        <div class="perfil-icon-large mb-3">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <h5>{{ form.instance.nome }}</h5>
+                        <p class="text-muted small">{{ form.instance.sistema.nome }}</p>
+                        {% if form.instance.ativo %}
+                            <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                            <span class="badge bg-danger">Inativo</span>
+                        {% endif %}
+                    {% else %}
+                        <i class="bi bi-person-badge display-4 text-muted mb-3"></i>
+                        <h5>Novo Perfil</h5>
+                        <p class="text-muted small">Defina as permissões e funções para este perfil.</p>
+                    {% endif %}
+                </div>
+                
+                {% if form.instance.pk %}
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ form.instance.funcoes.count }}</h4>
+                            <small class="text-muted">Função{{ form.instance.funcoes.count|pluralize:"ões" }}</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-info">{{ form.instance.usuariosistema_set.count }}</h4>
+                            <small class="text-muted">Usuário{{ form.instance.usuariosistema_set.count|pluralize }}</small>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <strong>Criado em:</strong><br>
+                            {{ form.instance.data_criacao|date:"d/m/Y H:i" }}
+                        </small>
+                        <br><br>
+                        <small class="text-muted">
+                            <strong>Última atualização:</strong><br>
+                            {{ form.instance.data_atualizacao|date:"d/m/Y H:i" }}
+                        </small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Dicas -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Dicas</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="bi bi-lightbulb text-warning"></i>
+                        <small>O nome do perfil deve ser único dentro do sistema.</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-lightbulb text-warning"></i>
+                        <small>Selecione apenas as funções necessárias para este perfil.</small>
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-lightbulb text-warning"></i>
+                        <small>A descrição ajuda outros administradores a entender o propósito do perfil.</small>
+                    </li>
+                    <li>
+                        <i class="bi bi-shield-check text-success"></i>
+                        <small>Perfis inativos não podem ser atribuídos a novos usuários.</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        {% if form.instance.pk and form.instance.usuariosistema_set.exists %}
+            <!-- Usuários com este Perfil -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Usuários com este Perfil</h6>
+                </div>
+                <div class="card-body">
+                    {% for usuario_sistema in form.instance.usuariosistema_set.all|slice:":5" %}
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="avatar-circle me-2">
+                                {{ usuario_sistema.usuario.user.first_name|first|upper }}{{ usuario_sistema.usuario.user.last_name|first|upper }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <small><strong>{{ usuario_sistema.usuario.nome_completo }}</strong></small>
+                                {% if not usuario_sistema.ativo %}
+                                    <span class="badge bg-warning ms-1">Inativo</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    {% if form.instance.usuariosistema_set.count > 5 %}
+                        <div class="text-center mt-2">
+                            <small class="text-muted">E mais {{ form.instance.usuariosistema_set.count|add:"-5" }} usuário{{ form.instance.usuariosistema_set.count|add:"-5"|pluralize }}...</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.perfil-icon-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 32px;
+    margin: 0 auto;
+}
+
+.avatar-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Estilização para checkboxes das funções */
+#id_funcoes {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#id_funcoes li {
+    margin-bottom: 8px;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+#id_funcoes li:hover {
+    background-color: #f8f9fc;
+}
+
+#id_funcoes input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+#id_funcoes label {
+    margin-bottom: 0;
+    font-weight: normal;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Adicionar classes do Bootstrap aos campos do formulário
+        const inputs = document.querySelectorAll('input[type="text"], textarea, select');
+        inputs.forEach(function(input) {
+            if (input.type !== 'checkbox') {
+                input.classList.add('form-control');
+            }
+        });
+        
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(function(checkbox) {
+            if (checkbox.id !== 'id_ativo') {
+                checkbox.classList.add('form-check-input');
+            }
+        });
+        
+        // Checkbox principal para ativo
+        const ativoCheckbox = document.getElementById('id_ativo');
+        if (ativoCheckbox) {
+            ativoCheckbox.classList.add('form-check-input');
+        }
+        
+        // Funcionalidade para selecionar/desselecionar todas as funções
+        const funcoesContainer = document.querySelector('#id_funcoes');
+        if (funcoesContainer) {
+            // Adicionar botões de controle
+            const controlDiv = document.createElement('div');
+            controlDiv.className = 'mb-2';
+            controlDiv.innerHTML = `
+                <button type="button" class="btn btn-sm btn-outline-primary me-2" id="selectAllFuncoes">
+                    <i class="bi bi-check-all"></i> Selecionar Todas
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllFuncoes">
+                    <i class="bi bi-x"></i> Desselecionar Todas
+                </button>
+            `;
+            funcoesContainer.parentNode.insertBefore(controlDiv, funcoesContainer);
+            
+            // Event listeners para os botões
+            document.getElementById('selectAllFuncoes').addEventListener('click', function() {
+                const checkboxes = funcoesContainer.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(function(checkbox) {
+                    checkbox.checked = true;
+                });
+            });
+            
+            document.getElementById('deselectAllFuncoes').addEventListener('click', function() {
+                const checkboxes = funcoesContainer.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(function(checkbox) {
+                    checkbox.checked = false;
+                });
+            });
+        }
+        
+        // Validação do nome do perfil
+        const nomeField = document.getElementById('id_nome');
+        if (nomeField) {
+            nomeField.addEventListener('blur', function(e) {
+                const nome = e.target.value.trim();
+                if (nome.length < 3) {
+                    e.target.classList.add('is-invalid');
+                } else {
+                    e.target.classList.remove('is-invalid');
+                    e.target.classList.add('is-valid');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

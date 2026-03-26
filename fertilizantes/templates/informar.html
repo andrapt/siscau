@@ -1,0 +1,11 @@
+{% extends 'adminlte/base.html' %}
+
+{% block content %}
+    <h1>Informações sobre Fertilizante</h1>     
+        <div class="fertilizante">
+            <h2>{{ fertilizante.nome }}</h2>
+            <p>Tipo: {{ fertilizante.tipo_fertilizante.nome }}</p>
+            <p>Linha: {{ fertilizante.linha }}</p>
+        </div>
+   
+{% endblock%}

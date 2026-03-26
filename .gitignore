@@ -1,0 +1,40 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.pyo
+
+# ===== Ambiente virtual =====
+venv/
+.env
+.env.*
+
+# ===== Django =====
+*.log
+local_settings.py
+db.sqlite3
+media/
+staticfiles/
+
+# ===== Migrações (opcional) =====
+# Descomente se NÃO quiser versionar migrations
+# **/migrations/
+# !**/migrations/__init__.py
+
+# ===== VSCode / IDEs =====
+.vscode/
+.idea/
+*.swp
+
+# ===== Sistema operacional =====
+.DS_Store
+Thumbs.db
+
+# ===== Testes =====
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ===== Build temporário =====
+*.egg-info/
+dist/
+build/

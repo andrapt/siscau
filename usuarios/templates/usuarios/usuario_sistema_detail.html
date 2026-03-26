@@ -1,0 +1,243 @@
+{% extends 'usuarios/base.html' %}
+{% load static %}
+
+{% block title %}Detalhes do Acesso{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-key"></i> Detalhes do Acesso
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'usuarios:usuario_sistema_list' %}" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-arrow-left"></i> Voltar
+                        </a>
+                        <a href="{% url 'usuarios:usuario_sistema_update' object.pk %}" class="btn btn-warning btn-sm">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <a href="{% url 'usuarios:usuario_sistema_delete' object.pk %}" 
+                           class="btn btn-danger btn-sm"
+                           onclick="return confirm('Tem certeza que deseja remover este acesso?')">
+                            <i class="bi bi-trash"></i> Excluir
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Informações do Usuário -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="bi bi-person"></i> Informações do Usuário
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4"><strong>Nome:</strong></div>
+                                        <div class="col-sm-8">{{ object.usuario.get_full_name|default:object.usuario.username }}</div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4"><strong>Username:</strong></div>
+                                        <div class="col-sm-8">{{ object.usuario.username }}</div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4"><strong>Email:</strong></div>
+                                        <div class="col-sm-8">{{ object.usuario.email|default:"Não informado" }}</div>
+                                    </div>
+                                    {% if object.usuario.perfil_usuario %}
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4"><strong>Cargo:</strong></div>
+                                        <div class="col-sm-8">{{ object.usuario.perfil_usuario.cargo|default:"Não informado" }}</div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4"><strong>Departamento:</strong></div>
+                                        <div class="col-sm-8">{{ object.usuario.perfil_usuario.departamento|default:"Não informado" }}</div>
+                                    </div>
+                                    {% endif %}
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4"><strong>Status do Usuário:</strong></div>
+                                        <div class="col-sm-8">
+                                            {% if object.usuario.is_active %}
+                                                <span class="badge bg-success">Ativo</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inativo</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Informações do Sistema e Acesso -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="bi bi-pc-display"></i> Informações do Sistema
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4"><strong>Sistema:</strong></div>
+                                        <div class="col-sm-8">
+                                            <span class="badge bg-info">{{ object.sistema.nome }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4"><strong>Descrição:</strong></div>
+                                        <div class="col-sm-8">{{ object.sistema.descricao|default:"Não informada" }}</div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4"><strong>Perfil:</strong></div>
+                                        <div class="col-sm-8">
+                                            <span class="badge bg-primary">{{ object.perfil.nome }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4"><strong>Status do Acesso:</strong></div>
+                                        <div class="col-sm-8">
+                                            {% if object.ativo %}
+                                                <span class="badge bg-success">Ativo</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Inativo</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4"><strong>Data de Acesso:</strong></div>
+                                        <div class="col-sm-8">{{ object.data_acesso|date:"d/m/Y H:i:s" }}</div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-sm-4"><strong>Último Acesso:</strong></div>
+                                        <div class="col-sm-8">
+                                            {% if object.data_ultimo_acesso %}
+                                                {{ object.data_ultimo_acesso|date:"d/m/Y H:i:s" }}
+                                            {% else %}
+                                                <span class="text-muted">Nunca acessou</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Funções do Perfil -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="bi bi-gear"></i> Funções Disponíveis no Perfil
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if object.perfil.funcoes.all %}
+                                        <div class="row">
+                                            {% for funcao in object.perfil.funcoes.all %}
+                                            <div class="col-md-4 mb-3">
+                                                <div class="card border-left-primary">
+                                                    <div class="card-body py-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="me-3">
+                                                                {% if funcao.ativo %}
+                                                                    <i class="bi bi-check-circle text-success"></i>
+                                                                {% else %}
+                                                                    <i class="bi bi-x-circle text-danger"></i>
+                                                                {% endif %}
+                                                            </div>
+                                                            <div>
+                                                                <h6 class="mb-0">{{ funcao.nome }}</h6>
+                                                                <small class="text-muted">{{ funcao.codigo }}</small>
+                                                                {% if funcao.descricao %}
+                                                                    <p class="mb-0 small">{{ funcao.descricao|truncatewords:10 }}</p>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center text-muted py-4">
+                                            <i class="bi bi-exclamation-circle" style="font-size: 2rem;"></i>
+                                            <p class="mt-2">Este perfil não possui funções associadas.</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Outros Acessos do Usuário -->
+                    {% if outros_acessos %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="bi bi-list"></i> Outros Acessos do Usuário
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Sistema</th>
+                                                    <th>Perfil</th>
+                                                    <th>Status</th>
+                                                    <th>Data de Acesso</th>
+                                                    <th>Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for acesso in outros_acessos %}
+                                                <tr>
+                                                    <td><span class="badge bg-info">{{ acesso.sistema.nome }}</span></td>
+                                                    <td><span class="badge bg-primary">{{ acesso.perfil.nome }}</span></td>
+                                                    <td>
+                                                        {% if acesso.ativo %}
+                                                            <span class="badge bg-success">Ativo</span>
+                                                        {% else %}
+                                                            <span class="badge bg-danger">Inativo</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td><small>{{ acesso.data_acesso|date:"d/m/Y" }}</small></td>
+                                                    <td>
+                                                        <a href="{% url 'usuarios:usuario_sistema_detail' acesso.pk %}" 
+                                                           class="btn btn-outline-info btn-sm">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.border-left-primary {
+    border-left: 4px solid #007bff !important;
+}
+</style>
+{% endblock %}

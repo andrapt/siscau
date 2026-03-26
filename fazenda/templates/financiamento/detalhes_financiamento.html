@@ -1,0 +1,176 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+{% block title %}
+    SISCau - Sistema de Controle Agrícola
+{% endblock %}
+
+{% block content %}     
+
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Detalhes do Financiamento</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'financiamentos' %}">Financiamentos</a></li>
+                        <li class="breadcrumb-item active">Detalhes</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Informações do Financiamento -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">{{ financiamento.item }}</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <strong>Tipo:</strong> {{ financiamento.get_tipo_display }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Valor Total:</strong> {{ financiamento.valor_total }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Entrada:</strong> R$ {{ financiamento.entrada|floatformat:2 }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Valor Financiado:</strong> R$ {{ financiamento.valor_financiado|floatformat:2 }}
+                                </div>
+                            </div>
+                            <br>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <strong>Instituição:</strong> {{ financiamento.instituicaoFinanceira }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Taxa de Juros:</strong> {{ financiamento.taxaJuros }}% a.m.
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Parcelas:</strong> {{ financiamento.parcelas_pagas }}/{{ financiamento.numeroParcelas }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Status:</strong> 
+                                    <span class="badge badge-{% if financiamento.status == 'ATIVO' %}success{% elif financiamento.status == 'QUITADO' %}primary{% else %}warning{% endif %}">
+                                        {{ financiamento.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <strong>Progresso do Pagamento:</strong>
+                                    <div class="progress mt-2">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ financiamento.percentual_pago }}%" aria-valuenow="{{ financiamento.percentual_pago }}" aria-valuemin="0" aria-valuemax="100">
+                                            {{ financiamento.percentual_pago|floatformat:1 }}%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Valor Pago:</strong> R$ {{ financiamento.valor_pago|floatformat:2 }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Valor Pendente:</strong> R$ {{ financiamento.valor_pendente|floatformat:2 }}
+                                </div>
+                            </div>
+                            {% if financiamento.observacoes %}
+                            <br>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <strong>Observações:</strong> {{ financiamento.observacoes }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Parcelas -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Parcelas</h3>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Parcela</th>
+                                        <th>Valor da Parcela</th>
+                                        <th>Valor Pago</th>
+                                        <th>Data Vencimento</th>
+                                        <th>Data Pagamento</th>
+                                        <th>Status</th>
+                                        <th>Juros/Multa</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for parcela in parcelas %}
+                                    <tr class="{% if parcela.esta_em_atraso %}table-danger{% elif parcela.status == 'pago' %}table-success{% endif %}">
+                                        <td>{{ parcela.numero_parcela }}</td>
+                                        <td>R$ {{ parcela.valor_parcela|floatformat:2 }}</td>
+                                        <td>R$ {{ parcela.valor_pago|floatformat:2 }}</td>
+                                        <td>{{ parcela.data_vencimento|date:"d/m/Y" }}</td>
+                                        <td>
+                                            {% if parcela.data_pagamento %}
+                                                {{ parcela.data_pagamento|date:"d/m/Y" }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-{% if parcela.status == 'pago' %}success{% elif parcela.status == 'pendente' %}warning{% else %}danger{% endif %}">
+                                                {{ parcela.get_status_display }}
+                                            </span>
+                                            {% if parcela.esta_em_atraso and parcela.status != 'pago' %}
+                                                <br><small class="text-danger">{{ parcela.dias_atraso }} dias de atraso</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if parcela.juros_multa %}
+                                                R$ {{ parcela.juros_multa|floatformat:2 }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if parcela.status != 'pago' %}
+                                                <a href="{% url 'pagar_parcela' parcela.id %}" class="btn btn-success btn-sm" title="Registrar Pagamento">
+                                                    <i class="fas fa-dollar-sign"></i>
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="row">
+                <div class="col-md-12">
+                    <a href="{% url 'financiamentos' %}" class="btn btn-secondary">Voltar</a>
+                    <a href="{% url 'editar_financiamento' financiamento.id %}" class="btn btn-warning">Editar Financiamento</a>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

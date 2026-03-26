@@ -1,0 +1,351 @@
+{% extends 'usuarios/base.html' %}
+
+{% block title %}Perfis{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Gerenciamento de Perfis</h1>
+    <a href="{% url 'usuarios:perfil_create' %}" class="btn btn-primary btn-sm shadow-sm">
+        <i class="bi bi-plus-circle"></i> Novo Perfil
+    </a>
+</div>
+
+<!-- Estatísticas Rápidas -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total de Perfis</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_perfis }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-person-badge text-gray-300" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Perfis Ativos</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ perfis_ativos }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-check-circle text-gray-300" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Sistemas</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_sistemas }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-gear text-gray-300" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Usuários com Perfil</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ usuarios_com_perfil }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people text-gray-300" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="nome" class="form-label">Nome do Perfil</label>
+                <input type="text" class="form-control" id="nome" name="nome" value="{{ request.GET.nome }}" placeholder="Digite o nome...">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="sistema" class="form-label">Sistema</label>
+                <select class="form-select" id="sistema" name="sistema">
+                    <option value="">Todos os sistemas</option>
+                    {% for sistema in sistemas %}
+                        <option value="{{ sistema.id }}" {% if request.GET.sistema == sistema.id|stringformat:"s" %}selected{% endif %}>
+                            {{ sistema.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="ativo" class="form-label">Status</label>
+                <select class="form-select" id="ativo" name="ativo">
+                    <option value="">Todos</option>
+                    <option value="True" {% if request.GET.ativo == 'True' %}selected{% endif %}>Ativo</option>
+                    <option value="False" {% if request.GET.ativo == 'False' %}selected{% endif %}>Inativo</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="ordenar" class="form-label">Ordenar por</label>
+                <select class="form-select" id="ordenar" name="ordenar">
+                    <option value="nome" {% if request.GET.ordenar == 'nome' %}selected{% endif %}>Nome</option>
+                    <option value="sistema__nome" {% if request.GET.ordenar == 'sistema__nome' %}selected{% endif %}>Sistema</option>
+                    <option value="-data_criacao" {% if request.GET.ordenar == '-data_criacao' %}selected{% endif %}>Mais recentes</option>
+                    <option value="data_criacao" {% if request.GET.ordenar == 'data_criacao' %}selected{% endif %}>Mais antigos</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+                <a href="{% url 'usuarios:perfil_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Perfis -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            Perfis Encontrados ({{ page_obj.paginator.count }})
+        </h6>
+    </div>
+    <div class="card-body">
+        {% if page_obj %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Perfil</th>
+                            <th>Sistema</th>
+                            <th>Funções</th>
+                            <th>Usuários</th>
+                            <th>Status</th>
+                            <th>Criado em</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for perfil in page_obj %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="perfil-icon me-3">
+                                            <i class="bi bi-person-badge"></i>
+                                        </div>
+                                        <div>
+                                            <strong>{{ perfil.nome }}</strong>
+                                            {% if perfil.descricao %}
+                                                <br><small class="text-muted">{{ perfil.descricao|truncatechars:50 }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ perfil.sistema.nome }}</span>
+                                    {% if not perfil.sistema.ativo %}
+                                        <br><small class="text-danger">Sistema inativo</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-secondary me-2">{{ perfil.funcoes.count }}</span>
+                                        <small class="text-muted">função{{ perfil.funcoes.count|pluralize:"ões" }}</small>
+                                    </div>
+                                    {% with funcoes_ativas=perfil.funcoes.filter|length funcoes_inativas=perfil.funcoes.all|length %}
+                                        {% if funcoes_ativas < funcoes_inativas %}
+                                            <br><small class="text-warning">Algumas funções inativas</small>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-primary me-2">{{ perfil.usuariosistema_set.count }}</span>
+                                        <small class="text-muted">usuário{{ perfil.usuariosistema_set.count|pluralize }}</small>
+                                    </div>
+                                    {% with usuarios_ativos=perfil.usuariosistema_set.count %}
+                                    {% if usuarios_ativos > 0 %}
+                                        <br><small class="text-muted">Usuários com acesso</small>
+                                    {% endif %}
+                                {% endwith %}
+                                </td>
+                                <td>
+                                    {% if perfil.ativo %}
+                                        <span class="badge bg-success">Ativo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ perfil.data_criacao|date:"d/m/Y" }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'usuarios:perfil_edit' perfil.pk %}" class="btn btn-outline-primary btn-sm" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'usuarios:perfil_delete' perfil.pk %}" class="btn btn-outline-danger btn-sm" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este perfil?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Paginação -->
+            {% if page_obj.has_other_pages %}
+                <nav aria-label="Navegação de páginas">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                                    <i class="bi bi-chevron-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                                    <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-person-badge display-4 text-muted mb-3"></i>
+                <h5 class="text-muted">Nenhum perfil encontrado</h5>
+                <p class="text-muted">Não há perfis cadastrados ou que atendam aos filtros aplicados.</p>
+                <a href="{% url 'usuarios:perfil_create' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Criar Primeiro Perfil
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.perfil-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background-color: #f8f9fc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5a5c69;
+    font-size: 1.2rem;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #5a5c69;
+}
+
+.btn-group .btn {
+    border-radius: 0.25rem;
+    margin-right: 2px;
+}
+
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tooltip para botões de ação
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Auto-submit do formulário de filtros quando mudar o select
+        const selectFilters = document.querySelectorAll('#sistema, #ativo, #ordenar');
+        selectFilters.forEach(function(select) {
+            select.addEventListener('change', function() {
+                this.form.submit();
+            });
+        });
+    });
+</script>
+{% endblock %}

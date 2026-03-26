@@ -1,0 +1,381 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+{% block content_header %}
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+{% endblock %}
+
+{% block title %}
+    SISCau - Sistema de Controle Agrícola
+{% endblock %}
+
+{% block content %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}    
+
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Financiamento</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'financiamentos' %}">Financiamentos</a></li>
+                        <li class="breadcrumb-item active">{% if financiamento %}Editar{% else %}Cadastrar{% endif %}</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">{% if financiamento %}Editar{% else %}Cadastrar{% endif %} Financiamento</h3>
+                        </div>
+                        
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.item.id_for_label }}">{{ form.item.label }}</label>
+                                            {{ form.item }}
+                                            {% if form.item.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.item.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.tipo.id_for_label }}">{{ form.tipo.label }}</label>
+                                            {{ form.tipo }}
+                                            {% if form.tipo.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.tipo.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.valor_total.id_for_label }}">{{ form.valor_total.label }}</label>
+                                            {{ form.valor_total }}
+                                            {% if form.valor_total.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.valor_total.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.valor_entrada.id_for_label }}">{{ form.valor_entrada.label }}</label>
+                                            {{ form.valor_entrada }}
+                                            {% if form.valor_entrada.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.valor_entrada.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="{{ form.valor_financiado.id_for_label }}">{{ form.valor_financiado.label }}</label>
+                                            {{ form.valor_financiado }}
+                                            {% if form.valor_financiado.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.valor_financiado.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.instituicao_financeira.id_for_label }}">{{ form.instituicao_financeira.label }}</label>
+                                            {{ form.instituicao_financeira }}
+                                            {% if form.instituicao_financeira.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.instituicao_financeira.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="{{ form.taxa_juros.id_for_label }}">{{ form.taxa_juros.label }}</label>
+                                            {{ form.taxa_juros }}
+                                            {% if form.taxa_juros.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.taxa_juros.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="{{ form.numero_parcelas.id_for_label }}">{{ form.numero_parcelas.label }}</label>
+                                            {{ form.numero_parcelas }}
+                                            {% if form.numero_parcelas.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.numero_parcelas.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.data_inicio.id_for_label }}">{{ form.data_inicio.label }}</label>
+                                            {{ form.data_inicio }}
+                                            {% if form.data_inicio.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.data_inicio.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.data_vencimento_primeira.id_for_label }}">{{ form.data_vencimento_primeira.label }}</label>
+                                            {{ form.data_vencimento_primeira }}
+                                            {% if form.data_vencimento_primeira.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.data_vencimento_primeira.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.status.id_for_label }}">{{ form.status.label }}</label>
+                                            {{ form.status }}
+                                            {% if form.status.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.status.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="{{ form.observacoes.id_for_label }}">{{ form.observacoes.label }}</label>
+                                            {{ form.observacoes }}
+                                            {% if form.observacoes.errors %}
+                                                <div class="text-danger">
+                                                    {% for error in form.observacoes.errors %}
+                                                        <small>{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-footer">
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                                <a href="{% url 'financiamentos' %}" class="btn btn-secondary">Cancelar</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function calcularValorFinanciado() {
+    var campoValorTotal = document.getElementById('id_valor_total');
+    var campoValorEntrada = document.getElementById('id_valor_entrada');
+    var campoValorFinanciado = document.getElementById('id_valor_financiado');
+    
+    if (!campoValorTotal || !campoValorEntrada || !campoValorFinanciado) {
+        return;
+    }
+    
+    // Extrair valores numéricos dos campos, removendo toda formatação incluindo R$
+    var valorTotalStr = campoValorTotal.value.replace(/[^\d,\.]/g, '').replace(/\./g, '').replace(',', '.');
+    var valorEntradaStr = campoValorEntrada.value.replace(/[^\d,\.]/g, '').replace(/\./g, '').replace(',', '.');
+    
+    var valorTotal = parseFloat(valorTotalStr) || 0;
+    var valorEntrada = parseFloat(valorEntradaStr) || 0;
+    var valorFinanciado = valorTotal - valorEntrada;
+    
+    if (valorFinanciado < 0) {
+        valorFinanciado = 0;
+    }
+    
+    // Formatar o valor financiado com formatação brasileira
+    if (valorFinanciado > 0) {
+        var formatter = new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        campoValorFinanciado.value = formatter.format(valorFinanciado);
+    } else {
+        campoValorFinanciado.value = '';
+    }
+}
+
+// Aplicar formatação aos campos monetários
+document.addEventListener('DOMContentLoaded', function() {
+    var camposMonetarios = ['id_valor_total', 'id_valor_entrada'];
+    
+    camposMonetarios.forEach(function(id) {
+        var campo = document.getElementById(id);
+        
+        if (campo) {
+            // Evento para calcular quando o valor mudar
+            /*campo.addEventListener('input', function() {
+                calcularValorFinanciado();
+            });*/
+            
+            campo.addEventListener('blur', function() {
+                var self = this;
+                if (self.value && !self.value.includes('R$')) {
+                    // Remove todos os caracteres não numéricos exceto vírgula e ponto
+                    var valorLimpo = self.value.replace(/[^\d,\.]/g, '');
+                    // Substitui vírgula por ponto para conversão
+                    valorLimpo = valorLimpo.replace(',', '.');
+                    var valor = parseFloat(valorLimpo);
+                    
+                    if (!isNaN(valor) && valor > 0) {
+                        // Formatar usando Intl.NumberFormat e armazenar como string
+                        var formatter = new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                        
+                        self.value = formatter.format(valor);
+                        console.log('Valor formatado armazenado:', self.value);
+                    }
+                }
+                // Calcular após a formatação
+                setTimeout(function() {
+                    calcularValorFinanciado();
+                }, 100);
+            });
+            
+            // Remover formatação no focus para permitir edição
+            campo.addEventListener('focus', function() {
+                if (this.value.includes('R$')) {
+                    // Remove formatação para edição
+                    var valorLimpo = this.value.replace(/[^\d,]/g, '').replace(/\./g, '');
+                    // Converte para formato editável (com vírgula como separador decimal)
+                    if (valorLimpo.length > 2) {
+                        valorLimpo = valorLimpo.slice(0, -2) + ',' + valorLimpo.slice(-2);
+                    }
+                    this.value = valorLimpo;
+                }
+            });
+            /*
+            campo.addEventListener('focus', function() {
+                if (this.value.includes('R$')) {
+                    this.value = this.value.replace(/[^\d,]/g, '').replace(/\./g, '');
+                }
+            });
+            */
+        }
+    });
+    
+    // Formatação para o campo valor financiado (somente leitura visual)
+    var campoValorFinanciado = document.getElementById('id_valor_financiado');
+    if (campoValorFinanciado) {
+        campoValorFinanciado.addEventListener('blur', function() {
+             if (this.value && !this.value.includes('R$')) {
+                 // Remove todos os caracteres não numéricos exceto vírgula e ponto
+                 var valorLimpo = this.value.replace(/[^\d,\.]/g, '');
+                 // Substitui vírgula por ponto para conversão
+                 valorLimpo = valorLimpo.replace(',', '.');
+                 var valor = parseFloat(valorLimpo);
+                 
+                 if (!isNaN(valor) && valor > 0) {
+                     // Formatar usando Intl.NumberFormat para garantir compatibilidade
+                     var formatter = new Intl.NumberFormat('pt-BR', {
+                         style: 'currency',
+                         currency: 'BRL',
+                         minimumFractionDigits: 2,
+                         maximumFractionDigits: 2
+                     });
+                     console.log('Financiado: ' + formatter.format(valor));
+                     this.value = formatter.format(valor);
+                     console.log('Financiado: ' + this.value);
+                 }
+             }
+         });
+        
+        /*
+        campoValorFinanciado.addEventListener('focus', function() {
+            if (this.value.includes('R$')) {
+                this.value = this.value.replace(/[^\d,]/g, '').replace(/\./g, '');
+            }
+        });
+        */
+    }
+    
+    // Calcular valor financiado ao carregar a página se já houver valores
+    //setTimeout(calcularValorFinanciado, 100);
+});
+</script>
+{% endblock %}

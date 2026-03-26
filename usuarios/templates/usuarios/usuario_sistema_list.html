@@ -1,0 +1,266 @@
+{% extends 'usuarios/base.html' %}
+{% load static %}
+
+{% block title %}Acessos de Usuários{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="bi bi-key"></i> Acessos de Usuários aos Sistemas
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'usuarios:usuario_sistema_create' %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-circle"></i> Novo Acesso
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Filtros -->
+                <div class="card-body">
+                    <form method="get" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="usuario" class="form-label">Usuário</label>
+                                <input type="text" class="form-control" id="usuario" name="usuario" 
+                                       value="{{ request.GET.usuario }}" placeholder="Nome do usuário">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="sistema" class="form-label">Sistema</label>
+                                <select class="form-select" id="sistema" name="sistema">
+                                    <option value="">Todos os sistemas</option>
+                                    {% for sistema in sistemas %}
+                                        <option value="{{ sistema.id }}" 
+                                                {% if request.GET.sistema == sistema.id|stringformat:'s' %}selected{% endif %}>
+                                            {{ sistema.nome }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="ativo" class="form-label">Status</label>
+                                <select class="form-select" id="ativo" name="ativo">
+                                    <option value="">Todos</option>
+                                    <option value="True" {% if request.GET.ativo == 'True' %}selected{% endif %}>Ativo</option>
+                                    <option value="False" {% if request.GET.ativo == 'False' %}selected{% endif %}>Inativo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="ordenar" class="form-label">Ordenar por</label>
+                                <select class="form-select" id="ordenar" name="ordenar">
+                                    <option value="usuario__username" {% if request.GET.ordenar == 'usuario__username' %}selected{% endif %}>Usuário</option>
+                                    <option value="sistema__nome" {% if request.GET.ordenar == 'sistema__nome' %}selected{% endif %}>Sistema</option>
+                                    <option value="data_acesso" {% if request.GET.ordenar == 'data_acesso' %}selected{% endif %}>Data de Acesso</option>
+                                    <option value="-data_acesso" {% if request.GET.ordenar == '-data_acesso' %}selected{% endif %}>Data de Acesso (Desc)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-outline-primary me-2">
+                                    <i class="bi bi-search"></i> Filtrar
+                                </button>
+                                <a href="{% url 'usuarios:usuario_sistema_list' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Acessos -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body table-responsive p-0">
+                    <table class="table table-hover text-nowrap">
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Sistema</th>
+                                <th>Perfil</th>
+                                <th>Status</th>
+                                <th>Data de Acesso</th>
+                                <th>Último Acesso</th>
+                                <th class="text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for acesso in page_obj %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm me-2">
+                                            <span class="badge bg-secondary rounded-circle p-2">
+                                                {{ acesso.usuario.first_name|first|default:acesso.usuario.username|first|upper }}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <strong>{{ acesso.usuario.get_full_name|default:acesso.usuario.username }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ acesso.usuario.email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ acesso.sistema.nome }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ acesso.perfil.nome }}</span>
+                                </td>
+                                <td>
+                                    {% if acesso.ativo %}
+                                        <span class="badge bg-success">Ativo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ acesso.data_acesso|date:"d/m/Y H:i" }}</small>
+                                </td>
+                                <td>
+                                    {% if acesso.data_ultimo_acesso %}
+                                        <small>{{ acesso.data_ultimo_acesso|date:"d/m/Y H:i" }}</small>
+                                    {% else %}
+                                        <small class="text-muted">Nunca</small>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'usuarios:usuario_sistema_edit' acesso.pk %}" 
+                                           class="btn btn-outline-warning btn-sm" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'usuarios:usuario_sistema_delete' acesso.pk %}" 
+                                           class="btn btn-outline-danger btn-sm" title="Excluir"
+                                           onclick="return confirm('Tem certeza que deseja remover este acesso?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                        <p class="mt-2">Nenhum acesso encontrado.</p>
+                                        <a href="{% url 'usuarios:usuario_sistema_create' %}" class="btn btn-primary">
+                                            <i class="bi bi-plus-circle"></i> Criar Primeiro Acesso
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Paginação -->
+                {% if is_paginated %}
+                <div class="card-footer">
+                    <div class="row align-items-center">
+                        <div class="col-sm-6">
+                            <small class="text-muted">
+                                Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} 
+                                de {{ page_obj.paginator.count }} acessos
+                            </small>
+                        </div>
+                        <div class="col-sm-6">
+                            <nav aria-label="Paginação">
+                                <ul class="pagination pagination-sm justify-content-end mb-0">
+                                    {% if page_obj.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                                                <i class="bi bi-chevron-double-left"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                                                <i class="bi bi-chevron-left"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_obj.number }}</span>
+                                    </li>
+                                    
+                                    {% if page_obj.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                                                <i class="bi bi-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                                                <i class="bi bi-chevron-double-right"></i>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas Rápidas -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="info-box">
+                <span class="info-box-icon bg-info"><i class="bi bi-people"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Total de Acessos</span>
+                    <span class="info-box-number">{{ total_acessos }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="info-box">
+                <span class="info-box-icon bg-success"><i class="bi bi-check-circle"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Acessos Ativos</span>
+                    <span class="info-box-number">{{ acessos_ativos }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="info-box">
+                <span class="info-box-icon bg-warning"><i class="bi bi-pc-display"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Sistemas</span>
+                    <span class="info-box-number">{{ total_sistemas }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="info-box">
+                <span class="info-box-icon bg-danger"><i class="bi bi-person-badge"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Usuários com Acesso</span>
+                    <span class="info-box-number">{{ usuarios_com_acesso }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-submit do formulário de filtros quando mudar o select
+    document.querySelectorAll('#sistema, #ativo, #ordenar').forEach(function(select) {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+</script>
+{% endblock %}
