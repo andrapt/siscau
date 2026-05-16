@@ -30,6 +30,7 @@ urlpatterns = [
     path('usuarios/novo/', views.usuario_create, name='usuario_create'),
     path('usuarios/<int:pk>/editar/', views.usuario_edit, name='usuario_edit'),
     path('usuarios/<int:pk>/toggle-status/', views.usuario_toggle_status, name='usuario_toggle_status'),
+    path('usuarios/<int:pk>/deletar/', views.usuario_delete, name='usuario_delete'),
     path('usuarios/<int:pk>/', views.usuario_detail, name='usuario_detail'),
     
     # URLs de Acesso de Usuário ao Sistema

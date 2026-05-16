@@ -80,7 +80,7 @@
                       {% for quadra in quadras %}
                         <tr>
                             <td>{{ quadra.id }}</td>
-                            <td><a href="{% url 'informar' id=quadra.id %}"> {{ quadra.nome }}</a> </td>
+                            <td><a href="{% url 'editar_quadra' id=quadra.id %}">{{ quadra.nome }}</a></td>
                             <td>{{ quadra.descricao }}</td>
                             <td> <a href="{% url 'editar_quadra' id=quadra.id %}" class="btn btn-primary btn-sm">Editar</a> 
                              <a href="{% url 'excluir_quadra' id=quadra.id %}" class="delete-btn btn btn-danger btn-sm">Excluir</a></td>

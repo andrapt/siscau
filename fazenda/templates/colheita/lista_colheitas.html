@@ -53,16 +53,19 @@
                 <h3 class="card-title">Lista de colheitas</h3>
                 
                 <div class="card-tools">
-                  <div class="input-group input-group-sm" style="width: 150px;">
-                    <form method="GET" id="formPesquisar">
-                      <div class="input-group input-group-sm">
-                        <input type="text" class="form-control" id="search" name="search" placeholder="Pesquisar" value="{{ request.GET.search }}">
-                        <span class="input-group-append">
-                          <button type="button" id="btnPesqusiar" class="btn btn-info btn-flat"><i class="fas fa-search"></i> </button>
-                        </span>
-                      </div>                                          
-                    </form>
-                  </div>
+                  <form method="GET" id="formPesquisar">
+                    <div class="input-group input-group-sm" style="width: 360px;">
+                      <input type="text" class="form-control" id="search" name="search" placeholder="Pesquisar" value="{{ search }}">
+                      <select class="form-control" id="ano" name="ano">
+                        {% for ano in anos_disponiveis %}
+                          <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
+                        {% endfor %}
+                      </select>
+                      <span class="input-group-append">
+                        <button type="button" id="btnPesqusiar" class="btn btn-info btn-flat"><i class="fas fa-search"></i></button>
+                      </span>
+                    </div>
+                  </form>
                 </div>
               </div>
                     
@@ -117,7 +120,7 @@
                     <ul class="pagination">
                         {% if colheitas.has_previous %}
                             <li class="paginate_button page-item previous" id="example1_previous">
-                                <a href="?page={{ colheitas.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-controls="example1" data-dt-idx="0" tabindex="0" class="page-link">Anterior</a>
+                                <a href="?page={{ colheitas.previous_page_number }}{% if search %}&search={{ search }}{% endif %}&ano={{ ano_selecionado }}" aria-controls="example1" data-dt-idx="0" tabindex="0" class="page-link">Anterior</a>
                             </li>
                         {% else %}
                             <li class="paginate_button page-item previous disabled" id="example1_previous">
@@ -128,18 +131,18 @@
                         {% for num in colheitas.paginator.page_range %}
                             {% if colheitas.number == num %}
                                 <li class="paginate_button page-item active">
-                                    <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-controls="example1" data-dt-idx="1" tabindex="0" class="page-link">{{ num }}</a>
+                                    <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}&ano={{ ano_selecionado }}" aria-controls="example1" data-dt-idx="1" tabindex="0" class="page-link">{{ num }}</a>
                                 </li>
                             {% else %}
                                 <li class="paginate_button page-item">
-                                    <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-controls="example1" data-dt-idx="1" tabindex="0" class="page-link">{{ num }}</a>
+                                    <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}&ano={{ ano_selecionado }}" aria-controls="example1" data-dt-idx="1" tabindex="0" class="page-link">{{ num }}</a>
                                 </li>
                             {% endif %}
                         {% endfor %}
 
                         {% if colheitas.has_next %}
                             <li class="paginate_button page-item next" id="example1_next">
-                                <a href="?page={{ colheitas.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-controls="example1" data-dt-idx="2" tabindex="0" class="page-link">Próximo</a>
+                                <a href="?page={{ colheitas.next_page_number }}{% if search %}&search={{ search }}{% endif %}&ano={{ ano_selecionado }}" aria-controls="example1" data-dt-idx="2" tabindex="0" class="page-link">Próximo</a>
                             </li>
                         {% else %}
                             <li class="paginate_button page-item next disabled" id="example1_next">
@@ -165,6 +168,10 @@
             if (e.key === 'Enter') {
                 document.getElementById('formPesquisar').submit();
             }
+        });
+
+        document.getElementById('ano').addEventListener('change', function() {
+            document.getElementById('formPesquisar').submit();
         });
         
     });

@@ -4,7 +4,8 @@ from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index, name='index'),    
+    path('', views.index, name='index'),
+    path('dashboard-v3/', views.index, name='dashboardv3'),
     ################# Rotas para gerenciamento de Culturas #################
     path('culturas/', views.listaCulturas, name='culturas'),
     path('editar_cultura/<int:id>/', views.editarCultura, name='editar_cultura'),

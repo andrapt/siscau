@@ -17,6 +17,20 @@
             <div class="card-body">
             <p class="login-box-msg">Entre para iniciar a sessão</p>
 
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                Usuário ou senha inválidos. Tente novamente.
+            </div>
+            {% endif %}
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+
             <form action="#" method="post">
                 {% csrf_token %}
                 <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
@@ -50,6 +64,9 @@
 
             <p class="mb-1">
                 <a href="/admin/forgot-password-v2/">Recuperar senha</a>
+            </p>
+            <p class="mb-0">
+                Solicite seu cadastro ao administrador do sistema.
             </p>
             
             </div>

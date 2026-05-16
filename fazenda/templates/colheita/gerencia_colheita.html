@@ -59,11 +59,36 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
+                                            <label for="{{ form.cultura.id_for_label }}">{{ form.cultura.label }}</label>
+                                            {{ form.cultura }}
+                                            {% if form.cultura.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.cultura.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
                                             <label for="{{ form.variedade.id_for_label }}">{{ form.variedade.label }}</label>
                                             {{ form.variedade }}
                                             {% if form.variedade.errors %}
                                                 <div class="text-danger">
                                                     {{ form.variedade.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6" id="grupo-vassoura-bruxa">
+                                        <div class="form-group">
+                                            <label for="{{ form.situacao_vassoura_bruxa.id_for_label }}">{{ form.situacao_vassoura_bruxa.label }}</label>
+                                            {{ form.situacao_vassoura_bruxa }}
+                                            {% if form.situacao_vassoura_bruxa.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.situacao_vassoura_bruxa.errors }}
                                                 </div>
                                             {% endif %}
                                         </div>
@@ -175,9 +200,26 @@
     document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('peso').addEventListener('input', calcularValorTotal);
         document.getElementById('preco').addEventListener('input', calcularValorTotal);
+
+        function alternarCampoVassouraBruxa() {
+            const campoCultura = document.getElementById('id_cultura');
+            const grupoVassoura = document.getElementById('grupo-vassoura-bruxa');
+            const campoVassoura = document.getElementById('id_situacao_vassoura_bruxa');
+            const textoSelecionado = campoCultura.options[campoCultura.selectedIndex]?.text.toLowerCase() || '';
+            const ehCacau = textoSelecionado.includes('cacau');
+
+            grupoVassoura.style.display = ehCacau ? 'block' : 'none';
+
+            if (!ehCacau) {
+                campoVassoura.value = '';
+            }
+        }
+
+        document.getElementById('id_cultura').addEventListener('change', alternarCampoVassouraBruxa);
         
         // Calcular inicialmente se os valores já estiverem preenchidos
         calcularValorTotal();
+        alternarCampoVassouraBruxa();
     });
 </script>
 {% endblock%}

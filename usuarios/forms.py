@@ -3,6 +3,11 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 from .models import Sistema, Funcao, Perfil, UsuarioSistema, Usuario
+from .utils import (
+    NOME_PERFIL_ADMINISTRADOR,
+    NOME_PERFIL_PRODUTOR,
+    garantir_perfis_base,
+)
 
 class SistemaForm(forms.ModelForm):
     class Meta:
@@ -169,6 +174,7 @@ class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
     first_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
     last_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    ativo = forms.BooleanField(required=False, initial=True, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
     
     # Campos do perfil de usuário
     telefone = forms.CharField(max_length=20, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '(00) 00000-0000'}))
@@ -185,14 +191,33 @@ class CustomUserCreationForm(UserCreationForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['username'].widget.attrs.update({'class': 'form-control'})
         self.fields['password1'].widget.attrs.update({'class': 'form-control'})
         self.fields['password2'].widget.attrs.update({'class': 'form-control'})
+        self.fields['username'].label = 'Usuário'
+        self.fields['first_name'].label = 'Nome'
+        self.fields['last_name'].label = 'Sobrenome'
+        self.fields['email'].label = 'E-mail'
+        self.fields['password1'].label = 'Senha'
+        self.fields['password2'].label = 'Confirmar senha'
+        self.fields['telefone'].label = 'Telefone'
+        self.fields['cargo'].label = 'Cargo'
+        self.fields['departamento'].label = 'Departamento'
+        self.fields['data_nascimento'].label = 'Data de nascimento'
+        self.fields['ativo'].label = 'Usuário ativo'
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise ValidationError('Já existe um usuário cadastrado com este e-mail.')
+        return email
     
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']
         user.first_name = self.cleaned_data['first_name']
         user.last_name = self.cleaned_data['last_name']
+        user.is_active = self.cleaned_data.get('ativo', True)
         
         if commit:
             user.save()
@@ -203,6 +228,44 @@ class CustomUserCreationForm(UserCreationForm):
                 cargo=self.cleaned_data.get('cargo', ''),
                 departamento=self.cleaned_data.get('departamento', ''),
                 data_nascimento=self.cleaned_data.get('data_nascimento'),
+                ativo=self.cleaned_data.get('ativo', True),
+            )
+        return user
+
+class UsuarioCadastroInternoForm(CustomUserCreationForm):
+    perfil_acesso = forms.ModelChoiceField(
+        queryset=Perfil.objects.none(),
+        label='Perfil de acesso',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        empty_label=None,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        sistema, _ = garantir_perfis_base()
+        self.fields['perfil_acesso'].queryset = Perfil.objects.filter(
+            sistema=sistema,
+            nome__in=[NOME_PERFIL_ADMINISTRADOR, NOME_PERFIL_PRODUTOR],
+            ativo=True,
+        ).order_by('nome')
+        self.fields['perfil_acesso'].initial = self.fields['perfil_acesso'].queryset.filter(
+            nome=NOME_PERFIL_PRODUTOR
+        ).first()
+        self.fields['perfil_acesso'].help_text = 'Selecione o perfil de acesso do novo usuário.'
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        perfil = self.cleaned_data['perfil_acesso']
+        user.is_staff = perfil.nome == NOME_PERFIL_ADMINISTRADOR
+        if commit:
+            user.save(update_fields=['is_staff'])
+            UsuarioSistema.objects.update_or_create(
+                usuario=user,
+                sistema=perfil.sistema,
+                defaults={
+                    'perfil': perfil,
+                    'ativo': self.cleaned_data.get('ativo', True),
+                },
             )
         return user
 
@@ -238,6 +301,7 @@ class UsuarioEditForm(forms.ModelForm):
             usuario.user.first_name = self.cleaned_data['first_name']
             usuario.user.last_name = self.cleaned_data['last_name']
             usuario.user.email = self.cleaned_data['email']
+            usuario.user.is_active = self.cleaned_data['ativo']
             usuario.user.save()
             
             # Salvar o perfil

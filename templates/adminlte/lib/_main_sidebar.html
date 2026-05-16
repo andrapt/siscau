@@ -1,0 +1,112 @@
+{% load static usuarios_permissoes %}
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="/" class="brand-link">
+        <img src="{% static 'admin/img/icon-yes.svg' %}" alt="SISCAU" class="brand-image img-circle elevation-3" style="opacity: .8">
+        <span class="brand-text font-weight-light">SISCAU</span>
+    </a>
+
+    <div class="sidebar">
+        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+            <div class="image">
+                <img src="{% static 'admin/img/icon-yes.svg' %}" class="img-circle elevation-2" alt="Usuário">
+            </div>
+            <div class="info">
+                <a href="#" class="d-block">{% firstof request.user.get_full_name request.user.username %}</a>
+            </div>
+        </div>
+
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                <li class="nav-header">MENU PRINCIPAL</li>
+
+                <li class="nav-item">
+                    <a href="{% url 'index' %}" class="nav-link {% if request.resolver_match.url_name == 'index' and request.resolver_match.app_name != 'usuarios' %}active{% endif %}">
+                        <i class="nav-icon fas fa-home"></i>
+                        <p>Início</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'culturas' %}" class="nav-link {% if request.resolver_match.url_name == 'culturas' or request.resolver_match.url_name == 'cadastrar_cultura' or request.resolver_match.url_name == 'editar_cultura' %}active{% endif %}">
+                        <i class="nav-icon fas fa-seedling"></i>
+                        <p>Culturas</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'variedades' %}" class="nav-link {% if request.resolver_match.url_name == 'variedades' or request.resolver_match.url_name == 'cadastrar_variedade' or request.resolver_match.url_name == 'editar_variedade' %}active{% endif %}">
+                        <i class="nav-icon fas fa-leaf"></i>
+                        <p>Variedades</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'quadras' %}" class="nav-link {% if request.resolver_match.url_name == 'quadras' or request.resolver_match.url_name == 'cadastrar_quadra' or request.resolver_match.url_name == 'editar_quadra' %}active{% endif %}">
+                        <i class="nav-icon fas fa-th-large"></i>
+                        <p>Quadras</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'insumos' %}" class="nav-link {% if request.resolver_match.url_name == 'insumos' or request.resolver_match.url_name == 'cadastrar_insumo' or request.resolver_match.url_name == 'editar_insumo' %}active{% endif %}">
+                        <i class="nav-icon fas fa-boxes"></i>
+                        <p>Insumos</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'despesas' %}" class="nav-link {% if request.resolver_match.url_name == 'despesas' or request.resolver_match.url_name == 'cadastrar_despesa' or request.resolver_match.url_name == 'editar_despesa' %}active{% endif %}">
+                        <i class="nav-icon fas fa-money-bill-wave"></i>
+                        <p>Despesas</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'colheitas' %}" class="nav-link {% if request.resolver_match.url_name == 'colheitas' or request.resolver_match.url_name == 'cadastrar_colheita' or request.resolver_match.url_name == 'editar_colheita' %}active{% endif %}">
+                        <i class="nav-icon fas fa-tractor"></i>
+                        <p>Colheitas</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'manejos' %}" class="nav-link {% if request.resolver_match.url_name == 'manejos' or request.resolver_match.url_name == 'cadastrar_manejo' or request.resolver_match.url_name == 'editar_manejo' %}active{% endif %}">
+                        <i class="nav-icon fas fa-tools"></i>
+                        <p>Manejos</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'calendarios' %}" class="nav-link {% if request.resolver_match.url_name == 'calendarios' or request.resolver_match.url_name == 'cadastrar_calendario' or request.resolver_match.url_name == 'editar_calendario' %}active{% endif %}">
+                        <i class="nav-icon fas fa-calendar-alt"></i>
+                        <p>Calendário</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'financiamentos' %}" class="nav-link {% if request.resolver_match.url_name == 'financiamentos' or request.resolver_match.url_name == 'cadastrar_financiamento' or request.resolver_match.url_name == 'editar_financiamento' or request.resolver_match.url_name == 'detalhes_financiamento' %}active{% endif %}">
+                        <i class="nav-icon fas fa-credit-card"></i>
+                        <p>Financiamentos</p>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'fertilizantes' %}" class="nav-link {% if request.resolver_match.url_name == 'fertilizantes' or request.resolver_match.url_name == 'novo_fertilizante' or request.resolver_match.url_name == 'editar_fertilizante' or request.resolver_match.url_name == 'informar' %}active{% endif %}">
+                        <i class="nav-icon fas fa-flask"></i>
+                        <p>Fertilizantes</p>
+                    </a>
+                </li>
+
+                {% if request.user|eh_administrador %}
+                    <li class="nav-header">ADMINISTRAÇÃO</li>
+
+                    <li class="nav-item">
+                        <a href="{% url 'usuarios:usuario_list' %}" class="nav-link {% if request.resolver_match.app_name == 'usuarios' and 'usuario' in request.resolver_match.url_name %}active{% endif %}">
+                            <i class="nav-icon fas fa-users-cog"></i>
+                            <p>Gerenciar Usuários</p>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</aside>

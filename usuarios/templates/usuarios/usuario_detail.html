@@ -1,287 +1,186 @@
-{% extends 'usuarios/base.html' %}
+{% extends 'adminlte/base.html' %}
 
 {% block title %}{{ usuario.nome_completo }} - Detalhes{% endblock %}
 
 {% block content %}
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Detalhes do Usuário</h1>
-    <div>
-        <a href="{% url 'usuarios:usuario_edit' usuario.pk %}" class="btn btn-primary btn-sm shadow-sm me-2">
-            <i class="bi bi-pencil"></i> Editar
-        </a>
-        <a href="{% url 'usuarios:usuario_list' %}" class="btn btn-secondary btn-sm shadow-sm">
-            <i class="bi bi-arrow-left"></i> Voltar
-        </a>
-    </div>
-</div>
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Detalhes do Usuario</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'usuarios:usuario_list' %}">Usuarios</a></li>
+                        <li class="breadcrumb-item active">Detalhes</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
 
-<div class="row">
-    <!-- Informações Básicas -->
-    <div class="col-lg-4">
-        <div class="card shadow mb-4">
-            <div class="card-body text-center">
-                <div class="avatar-circle-large mb-3 {% if not usuario.ativo %}bg-secondary{% endif %}">
-                    {{ usuario.user.first_name|first|upper }}{{ usuario.user.last_name|first|upper }}
-                </div>
-                <h4>{{ usuario.nome_completo }}</h4>
-                <p class="text-muted">{{ usuario.cargo|default:"Sem cargo definido" }}</p>
-                
-                {% if usuario.ativo %}
-                    <span class="badge bg-success">Ativo</span>
-                {% else %}
-                    <span class="badge bg-danger">Inativo</span>
-                {% endif %}
-                
-                <hr>
-                
-                <div class="row text-center">
-                    <div class="col-6">
-                        <h4 class="text-primary">{{ usuario.sistemas_acesso.count }}</h4>
-                        <small class="text-muted">Sistema{{ usuario.sistemas_acesso.count|pluralize }}</small>
-                    </div>
-                    <div class="col-6">
-                        <h4 class="text-info">{{ usuario.usuariosistema_set.count }}</h4>
-                <small class="text-muted">Acesso{{ usuario.usuariosistema_set.count|pluralize }} ao{{ usuario.usuariosistema_set.count|pluralize }} sistema{{ usuario.usuariosistema_set.count|pluralize }}</small>
-                    </div>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <a href="{% url 'usuarios:usuario_list' %}" class="btn btn-secondary">Voltar</a>
+                    <a href="{% url 'usuarios:usuario_edit' usuario.pk %}" class="btn btn-primary">Editar</a>
+                    <a href="{% url 'usuarios:usuario_delete' usuario.pk %}" class="btn btn-danger">Excluir</a>
                 </div>
             </div>
-        </div>
-        
-        <!-- Informações de Contato -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Informações de Contato</h6>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <strong>Email:</strong><br>
-                    <a href="mailto:{{ usuario.user.email }}">{{ usuario.user.email }}</a>
-                </div>
-                
-                {% if usuario.telefone %}
-                    <div class="mb-3">
-                        <strong>Telefone:</strong><br>
-                        <a href="tel:{{ usuario.telefone }}">{{ usuario.telefone }}</a>
-                    </div>
-                {% endif %}
-                
-                {% if usuario.departamento %}
-                    <div class="mb-3">
-                        <strong>Departamento:</strong><br>
-                        {{ usuario.departamento }}
-                    </div>
-                {% endif %}
-                
-                {% if usuario.data_nascimento %}
-                    <div class="mb-0">
-                        <strong>Data de Nascimento:</strong><br>
-                        {{ usuario.data_nascimento|date:"d/m/Y" }}
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Informações do Sistema -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Informações do Sistema</h6>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <strong>Criado em:</strong><br>
-                    <small class="text-muted">{{ usuario.data_criacao|date:"d/m/Y H:i" }}</small>
-                </div>
-                
-                <div class="mb-3">
-                    <strong>Última atualização:</strong><br>
-                    <small class="text-muted">{{ usuario.data_atualizacao|date:"d/m/Y H:i" }}</small>
-                </div>
-                
-                <div class="mb-0">
-                    <strong>Último login:</strong><br>
-                    <small class="text-muted">
-                        {% if usuario.user.last_login %}
-                            {{ usuario.user.last_login|date:"d/m/Y H:i" }}
-                        {% else %}
-                            Nunca fez login
-                        {% endif %}
-                    </small>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Acessos aos Sistemas -->
-    <div class="col-lg-8">
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">Acessos aos Sistemas</h6>
-                <a href="{% url 'usuarios:usuario_sistema_create' %}?usuario={{ usuario.pk }}" class="btn btn-success btn-sm">
-                    <i class="bi bi-plus-circle"></i> Novo Acesso
-                </a>
-            </div>
-            <div class="card-body">
-                {% if sistemas_acesso %}
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Sistema</th>
-                                    <th>Perfil</th>
-                                    <th>Status</th>
-                                    <th>Data de Criação</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for acesso in sistemas_acesso %}
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="sistema-icon me-2">
-                                                    <i class="bi bi-gear-fill"></i>
-                                                </div>
-                                                <div>
-                                                    <strong>{{ acesso.sistema.nome }}</strong>
-                                                    {% if acesso.sistema.descricao %}
-                                                        <br><small class="text-muted">{{ acesso.sistema.descricao|truncatechars:50 }}</small>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-info">{{ acesso.perfil.nome }}</span>
-                                            <br><small class="text-muted">{{ acesso.perfil.funcoes.count }} função{{ acesso.perfil.funcoes.count|pluralize:"ões" }}</small>
-                                        </td>
-                                        <td>
-                                            {% if acesso.ativo %}
-                                                <span class="badge bg-success">Ativo</span>
-                                            {% else %}
-                                                <span class="badge bg-danger">Inativo</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <small>{{ acesso.data_criacao|date:"d/m/Y" }}</small>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{% url 'usuarios:usuario_sistema_edit' acesso.pk %}" class="btn btn-outline-primary btn-sm" title="Editar">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                <a href="{% url 'usuarios:usuario_sistema_delete' acesso.pk %}" class="btn btn-outline-danger btn-sm" title="Remover" onclick="return confirm('Tem certeza que deseja remover este acesso?')">
-                                                    <i class="bi bi-trash"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="text-center py-4">
-                        <i class="bi bi-key display-4 text-muted mb-3"></i>
-                        <h5 class="text-muted">Nenhum acesso configurado</h5>
-                        <p class="text-muted">Este usuário ainda não possui acesso a nenhum sistema.</p>
-                        <a href="{% url 'usuarios:usuario_sistema_create' %}?usuario={{ usuario.pk }}" class="btn btn-success">
-                            <i class="bi bi-plus-circle"></i> Configurar Primeiro Acesso
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Funções Disponíveis -->
-        {% if sistemas_acesso %}
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Funções Disponíveis</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        {% for acesso in sistemas_acesso %}
-                            {% if acesso.ativo %}
-                            <div class="col-md-6 mb-3">
-                                <div class="border rounded p-3">
-                                    <h6 class="text-primary mb-2">{{ acesso.sistema.nome }}</h6>
-                                    <p class="mb-2"><strong>Perfil:</strong> {{ acesso.perfil.nome }}</p>
-                                    <div class="mb-0">
-                                        <strong>Funções:</strong>
-                                        <div class="mt-1">
-                                            {% for funcao in acesso.perfil.funcoes.all %}
-                                                {% if funcao.ativo %}
-                                                <span class="badge bg-secondary me-1 mb-1">{{ funcao.nome }}</span>
-                                                {% endif %}
-                                            {% empty %}
-                                                <small class="text-muted">Nenhuma função ativa</small>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">{{ usuario.nome_completo }}</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <strong>Usuario:</strong> {{ usuario.user.username }}
                                 </div>
-                            {% endif %}
+                                <div class="col-md-3">
+                                    <strong>E-mail:</strong> {{ usuario.user.email|default:"-" }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Cargo:</strong> {{ usuario.cargo|default:"-" }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Status:</strong>
+                                    {% if usuario.ativo %}
+                                        <span class="badge badge-success">Ativo</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Inativo</span>
+                                    {% endif %}
+                                </div>
                             </div>
-                        {% endfor %}
+                            <br>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <strong>Telefone:</strong> {{ usuario.telefone|default:"-" }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Departamento:</strong> {{ usuario.departamento|default:"-" }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Data de Nascimento:</strong>
+                                    {% if usuario.data_nascimento %}
+                                        {{ usuario.data_nascimento|date:"d/m/Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Ultimo Login:</strong>
+                                    {% if usuario.user.last_login %}
+                                        {{ usuario.user.last_login|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        Nunca fez login
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <br>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <strong>Criado em:</strong> {{ usuario.data_criacao|date:"d/m/Y H:i" }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Atualizado em:</strong> {{ usuario.data_atualizacao|date:"d/m/Y H:i" }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Sistemas com acesso:</strong> {{ usuario.sistemas_acesso.count }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Total de acessos:</strong> {{ usuario.usuariosistema_set.count }}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        {% endif %}
-    </div>
-</div>
-{% endblock %}
 
-{% block extra_css %}
-<style>
-.avatar-circle-large {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background-color: #007bff;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 32px;
-    margin: 0 auto;
-}
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Acessos aos Sistemas</h3>
+                        </div>
+                        <div class="card-body">
+                            {% if sistemas_acesso %}
+                                <table class="table table-bordered table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Sistema</th>
+                                            <th>Perfil</th>
+                                            <th>Status</th>
+                                            <th>Data de Criação</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for acesso in sistemas_acesso %}
+                                            <tr>
+                                                <td>{{ acesso.sistema.nome }}</td>
+                                                <td>{{ acesso.perfil.nome }}</td>
+                                                <td>
+                                                    {% if acesso.ativo %}
+                                                        <span class="badge badge-success">Ativo</span>
+                                                    {% else %}
+                                                        <span class="badge badge-danger">Inativo</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ acesso.data_acesso|date:"d/m/Y H:i" }}</td>
+                                                <td>
+                                                    <a href="{% url 'usuarios:usuario_sistema_edit' acesso.pk %}" class="btn btn-primary btn-sm">Editar</a>
+                                                    <a href="{% url 'usuarios:usuario_sistema_delete' acesso.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja remover este acesso?')">Excluir</a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% else %}
+                                <p class="mb-0">Este usuario ainda não possui acesso a nenhum sistema.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-.sistema-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    background-color: #f8f9fc;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #5a5c69;
-}
-
-.table th {
-    border-top: none;
-    font-weight: 600;
-    font-size: 0.875rem;
-    color: #5a5c69;
-}
-
-.btn-group .btn {
-    border-radius: 0.25rem;
-    margin-right: 2px;
-}
-
-.btn-group .btn:last-child {
-    margin-right: 0;
-}
-</style>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Tooltip para botões de ação
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
-        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    });
-</script>
+            {% if sistemas_acesso %}
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Funções Disponíveis</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    {% for acesso in sistemas_acesso %}
+                                        {% if acesso.ativo %}
+                                            <div class="col-md-6">
+                                                <div class="border rounded p-3 mb-3">
+                                                    <strong>{{ acesso.sistema.nome }}</strong><br>
+                                                    <small class="text-muted">Perfil: {{ acesso.perfil.nome }}</small>
+                                                    <div class="mt-2">
+                                                        {% for funcao in acesso.perfil.funcoes.all %}
+                                                            {% if funcao.ativo %}
+                                                                <span class="badge badge-secondary">{{ funcao.nome }}</span>
+                                                            {% endif %}
+                                                        {% empty %}
+                                                            <small class="text-muted">Nenhuma função ativa</small>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </section>
 {% endblock %}

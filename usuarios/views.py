@@ -8,8 +8,9 @@ from django.contrib.auth.models import User
 from .models import Sistema, Funcao, Perfil, UsuarioSistema, Usuario
 from .forms import (
     SistemaForm, FuncaoForm, PerfilForm, UsuarioSistemaForm, 
-    UsuarioForm, CustomUserCreationForm, UsuarioEditForm, UsuarioFiltroForm
+    UsuarioForm, UsuarioCadastroInternoForm, UsuarioEditForm, UsuarioFiltroForm
 )
+from .utils import administrador_required
 
 # ============= VIEWS DE SISTEMA =============
 
@@ -291,7 +292,7 @@ def perfil_delete(request, pk):
 
 # ============= VIEWS DE USUÁRIO =============
 
-@login_required
+@administrador_required
 def usuario_list(request):
     """Lista todos os usuários"""
     usuarios = Usuario.objects.select_related('user').order_by('user__username')
@@ -332,17 +333,17 @@ def usuario_list(request):
     }
     return render(request, 'usuarios/usuario_list.html', context)
 
-@login_required
+@administrador_required
 def usuario_create(request):
     """Criar novo usuário"""
     if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
+        form = UsuarioCadastroInternoForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, 'Usuário criado com sucesso!')
             return redirect('usuarios:usuario_list')
     else:
-        form = CustomUserCreationForm()
+        form = UsuarioCadastroInternoForm()
     
     context = {
         'form': form,
@@ -351,7 +352,7 @@ def usuario_create(request):
     }
     return render(request, 'usuarios/usuario_form.html', context)
 
-@login_required
+@administrador_required
 def usuario_edit(request, pk):
     """Editar usuário"""
     usuario = get_object_or_404(Usuario, pk=pk)
@@ -373,7 +374,7 @@ def usuario_edit(request, pk):
     }
     return render(request, 'usuarios/usuario_form.html', context)
 
-@login_required
+@administrador_required
 def usuario_detail(request, pk):
     """Detalhes do usuário"""
     usuario = get_object_or_404(Usuario, pk=pk)
@@ -386,13 +387,15 @@ def usuario_detail(request, pk):
     }
     return render(request, 'usuarios/usuario_detail.html', context)
 
-@login_required
+@administrador_required
 def usuario_toggle_status(request, pk):
     """Ativar/Desativar usuário"""
     usuario = get_object_or_404(Usuario, pk=pk)
     
     if request.method == 'POST':
         usuario.ativo = not usuario.ativo
+        usuario.user.is_active = usuario.ativo
+        usuario.user.save()
         usuario.save()
         
         status_text = "ativado" if usuario.ativo else "desativado"
@@ -405,6 +408,28 @@ def usuario_toggle_status(request, pk):
         'action': 'Ativar' if not usuario.ativo else 'Desativar'
     }
     return render(request, 'usuarios/usuario_confirm_toggle.html', context)
+
+@administrador_required
+def usuario_delete(request, pk):
+    """Excluir usuário"""
+    usuario = get_object_or_404(Usuario, pk=pk)
+    total_acessos = UsuarioSistema.objects.filter(usuario=usuario.user).count()
+
+    if request.method == 'POST':
+        if request.user == usuario.user:
+            messages.error(request, 'Não é permitido excluir o próprio usuário logado.')
+            return redirect('usuarios:usuario_list')
+
+        usuario.user.delete()
+        messages.success(request, 'Usuário excluído com sucesso!')
+        return redirect('usuarios:usuario_list')
+
+    context = {
+        'usuario': usuario,
+        'total_acessos': total_acessos,
+        'title': f'Excluir Usuário: {usuario.nome_completo}',
+    }
+    return render(request, 'usuarios/usuario_confirm_delete.html', context)
 
 # ============= VIEWS DE ACESSO DE USUÁRIO AO SISTEMA =============
 

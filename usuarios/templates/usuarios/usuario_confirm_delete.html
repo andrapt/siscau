@@ -1,0 +1,96 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+{% block title %}
+    SISCau - Excluir Usuario
+{% endblock %}
+
+{% block content %}
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>Excluir Usuario</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'usuarios:usuario_list' %}">Usuarios</a></li>
+                        <li class="breadcrumb-item active">Excluir</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card card-danger">
+                        <div class="card-header">
+                            <h3 class="card-title">Confirmar exclusao do usuario</h3>
+                        </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="card-body">
+                                <div class="alert alert-danger">
+                                    <h5><i class="icon fas fa-ban"></i> Atenção!</h5>
+                                    Você está prestes a excluir o usuário <strong>{{ usuario.nome_completo }}</strong>.
+                                    Esta ação é irreversível.
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="info-box">
+                                            <span class="info-box-icon bg-info"><i class="fas fa-envelope"></i></span>
+                                            <div class="info-box-content">
+                                                <span class="info-box-text">E-mail</span>
+                                                <span class="info-box-number text-sm">{{ usuario.user.email|default:"-" }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="info-box">
+                                            <span class="info-box-icon bg-warning"><i class="fas fa-key"></i></span>
+                                            <div class="info-box-content">
+                                                <span class="info-box-text">Acessos vinculados</span>
+                                                <span class="info-box-number">{{ total_acessos }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p class="mb-1"><strong>Usuario:</strong> {{ usuario.user.username }}</p>
+                                <p class="mb-1"><strong>Cargo:</strong> {{ usuario.cargo|default:"-" }}</p>
+                                <p class="mb-0"><strong>Departamento:</strong> {{ usuario.departamento|default:"-" }}</p>
+                            </div>
+
+                            <div class="card-footer">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash"></i> Excluir Usuario
+                                </button>
+                                <a href="{% url 'usuarios:usuario_list' %}" class="btn btn-default">Cancelar</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card card-outline card-secondary">
+                        <div class="card-header">
+                            <h3 class="card-title">Impacto da exclusao</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-2">Ao excluir este usuario, o sistema também removerá:</p>
+                            <ul class="mb-0">
+                                <li>Dados de acesso do login</li>
+                                <li>Perfil complementar do usuario</li>
+                                <li>Acessos aos sistemas cadastrados</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

@@ -2,7 +2,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.core.paginator import Paginator
-from django.db.models import Sum, Min
+from django.db.models import Q, Sum, Min
+from datetime import date
 import locale
 from .models import Cultura, Variedade, Insumo, TipoInsumo, Fazenda, TipoAtividade, Quadra, Categoria, TipoColheita, Despesa, Colheita, Manejo, CalendarioAgricola, Financiamento, ParcelaFinanciamento
 from .forms import CulturaForm, VariedadeForm, InsumoForm, TipoInsumoForm, TipoAtividadeForm, QuadraForm, CategoriaForm, TipoColheitaForm, DespesaForm, ColheitaForm, ManejoForm, CalendarioAgricolaForm, FinanciamentoForm, ParcelaFinanciamentoForm
@@ -703,24 +704,46 @@ def excluirDespesa(request, id):
 #
 @login_required
 def listaColheitas(request):
+    ano_corrente = date.today().year
+    pesquisa = request.GET.get("search", "").strip()
+    ano_param = request.GET.get("ano")
 
-    # busca do request a informação de pesquisa caso o usuário tenha feito
-    pesquisa = request.GET.get("search")
-    
-    """ 
-        Lista todas as Colheitas cadastradas no sistema
+    try:
+        ano_selecionado = int(ano_param) if ano_param else ano_corrente
+    except (TypeError, ValueError):
+        ano_selecionado = ano_corrente
+
     """
+        Lista as Colheitas cadastradas no sistema.
+        Por padrão, exibe apenas o ano corrente e permite consultar outros anos.
+    """
+    colheitas = Colheita.objects.filter(ano=ano_selecionado)
+
     if pesquisa:
-        colheitas = Colheita.objects.filter(quadra__nome__icontains=pesquisa) | Colheita.objects.filter(variedade__nome__icontains=pesquisa)
-    else:
-        colheitas = Colheita.objects.all().order_by('-data')
+        colheitas = colheitas.filter(
+            Q(quadra__nome__icontains=pesquisa) |
+            Q(variedade__nome__icontains=pesquisa)
+        )
+
+    colheitas = colheitas.order_by('-data', '-id')
+
+    anos_disponiveis = list(
+        Colheita.objects.order_by('-ano').values_list('ano', flat=True).distinct()
+    )
+    if ano_corrente not in anos_disponiveis:
+        anos_disponiveis.insert(0, ano_corrente)
 
     # Procedimentos para paginação
     paginator = Paginator(colheitas, 10)  # 10 colheitas por página
     pagina = request.GET.get('page')
     colheitas = paginator.get_page(pagina)   
 
-    context = {"colheitas": colheitas}
+    context = {
+        "colheitas": colheitas,
+        "search": pesquisa,
+        "ano_selecionado": ano_selecionado,
+        "anos_disponiveis": anos_disponiveis,
+    }
     
     return render(request, "colheita/lista_colheitas.html", context)
 

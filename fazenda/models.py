@@ -116,6 +116,12 @@ class TipoColheita (models.Model):
     
 # Classe de Colheita (com valor de venda) ex. frutos, amêndoas secas, etc.
 class Colheita (models.Model): 
+    VASSOURA_BRUXA_CHOICES = [
+        ('', 'Nao se aplica'),
+        ('COM', 'Cacau com vassoura de bruxa'),
+        ('SEM', 'Cacau sem vassoura de bruxa'),
+    ]
+
     data = models.DateField(null=True, blank=True)
     ano = models.IntegerField(default=2025)
     peso = models.DecimalField(max_digits=6, decimal_places=2)     
@@ -123,8 +129,15 @@ class Colheita (models.Model):
     valorTotal = models.DecimalField(max_digits=6, decimal_places=2)
     descricao = models.TextField(null=True, blank=True) 
     quadra = models.ForeignKey(Quadra, on_delete=models.CASCADE)
+    cultura = models.ForeignKey(Cultura, on_delete=models.SET_NULL, null=True, blank=True)
     variedade = models.ForeignKey(Variedade, on_delete=models.CASCADE)
     tipoColheita = models.ForeignKey(TipoColheita, on_delete=models.CASCADE)
+    situacao_vassoura_bruxa = models.CharField(
+        max_length=3,
+        choices=VASSOURA_BRUXA_CHOICES,
+        blank=True,
+        default='',
+    )
 
     class Meta:
         db_table = 'colheita'

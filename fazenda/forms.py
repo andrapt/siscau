@@ -253,8 +253,10 @@ class ColheitaForm(forms.ModelForm):
             'valorTotal': 'Valor Total (R$)',
             'descricao': 'Descrição',
             'quadra': 'Quadra',
+            'cultura': 'Tipo de Cultura',
             'variedade': 'Variedade',
-            'tipoColheita': 'Tipo de Colheita'
+            'tipoColheita': 'Tipo de Colheita',
+            'situacao_vassoura_bruxa': 'Cacau com Vassoura de Bruxa?'
         }
         widgets = {
             'data': forms.DateInput(attrs={'type': 'date','style': 'width: 100%;height: 40px; margin: 0 auto; display: block;','class': 'form-control'}, format='%Y-%m-%d'),
@@ -264,15 +266,39 @@ class ColheitaForm(forms.ModelForm):
             'valorTotal': forms.NumberInput(attrs={'class': 'form-control','placeholder': 'Valor total', 'id': 'valorTotal', 'readonly': 'readonly'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control'}),
             'quadra': forms.Select(attrs={'class': 'form-control'}),
+            'cultura': forms.Select(attrs={'class': 'form-control', 'id': 'id_cultura'}),
             'variedade': forms.Select(attrs={'class': 'form-control'}),
-            'tipoColheita': forms.Select(attrs={'class': 'form-control'})
+            'tipoColheita': forms.Select(attrs={'class': 'form-control'}),
+            'situacao_vassoura_bruxa': forms.Select(attrs={'class': 'form-control', 'id': 'id_situacao_vassoura_bruxa'})
         }
     
     def __init__(self, *args, **kwargs):
            super().__init__(*args, **kwargs)
+           self.fields['cultura'].required = True
+           self.fields['cultura'].queryset = Cultura.objects.all().order_by('nome')
+           self.fields['variedade'].queryset = Variedade.objects.all().order_by('nome')
+           self.fields['quadra'].queryset = Quadra.objects.all().order_by('nome')
+           self.fields['tipoColheita'].queryset = TipoColheita.objects.all().order_by('nome')
+           self.fields['situacao_vassoura_bruxa'].required = False
            for field_name, field in self.fields.items():
                if field.required:
                    self.fields[field_name].label = f'{field.label} *'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cultura = cleaned_data.get('cultura')
+        situacao = cleaned_data.get('situacao_vassoura_bruxa', '')
+
+        if cultura and 'cacau' in cultura.nome.strip().lower():
+            if not situacao:
+                self.add_error(
+                    'situacao_vassoura_bruxa',
+                    'Informe se o cacau e com vassoura de bruxa ou sem.'
+                )
+        else:
+            cleaned_data['situacao_vassoura_bruxa'] = ''
+
+        return cleaned_data
 
 class CalendarioAgricolaForm(forms.ModelForm):
     class Meta:
