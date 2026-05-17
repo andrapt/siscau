@@ -64,10 +64,16 @@ class VariedadeForm(forms.ModelForm):
     class Meta:
         model = Variedade
         fields = '__all__'
+        labels = {
+            'nome': 'Nome da variedade',
+            'cultura': 'Cultura',
+            'descricao': 'Descricao',
+        }
         widgets = {
             'nome': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Digite o nome da variedade',}),
+            'cultura': forms.Select(attrs={'class': 'form-control'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control'})
         }
 
@@ -76,6 +82,14 @@ class VariedadeForm(forms.ModelForm):
         if len(nome) < 3:
             raise forms.ValidationError("O nome deve ter pelo menos 4 caracteres.")
         return nome
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cultura'].required = True
+        self.fields['cultura'].queryset = Cultura.objects.all().order_by('nome')
+        for field_name, field in self.fields.items():
+            if field.required:
+                self.fields[field_name].label = f'{field.label} *'
 
 class TipoInsumoForm(forms.ModelForm):
     class Meta:
@@ -249,8 +263,6 @@ class ColheitaForm(forms.ModelForm):
             'data': 'Data da Colheita',
             'ano': 'Ano da Safra',
             'peso': 'Peso (kg)',
-            'preco': 'Preço por kg (R$)',
-            'valorTotal': 'Valor Total (R$)',
             'descricao': 'Descrição',
             'quadra': 'Quadra',
             'cultura': 'Tipo de Cultura',
@@ -261,13 +273,11 @@ class ColheitaForm(forms.ModelForm):
         widgets = {
             'data': forms.DateInput(attrs={'type': 'date','style': 'width: 100%;height: 40px; margin: 0 auto; display: block;','class': 'form-control'}, format='%Y-%m-%d'),
             'ano': forms.NumberInput(attrs={'class': 'form-control','placeholder': 'Digite o ano da safra'}),
-            'peso': forms.NumberInput(attrs={'class': 'form-control','placeholder': 'Digite o peso em kg', 'id': 'peso', 'onchange': 'calcularValorTotal()'}),
-            'preco': forms.NumberInput(attrs={'class': 'form-control','placeholder': 'Digite o preço por kg', 'id': 'preco', 'onchange': 'calcularValorTotal()'}),
-            'valorTotal': forms.NumberInput(attrs={'class': 'form-control','placeholder': 'Valor total', 'id': 'valorTotal', 'readonly': 'readonly'}),
+            'peso': forms.NumberInput(attrs={'class': 'form-control','placeholder': 'Digite o peso em kg', 'id': 'peso'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control'}),
             'quadra': forms.Select(attrs={'class': 'form-control'}),
             'cultura': forms.Select(attrs={'class': 'form-control', 'id': 'id_cultura'}),
-            'variedade': forms.Select(attrs={'class': 'form-control'}),
+            'variedade': forms.Select(attrs={'class': 'form-control', 'id': 'id_variedade'}),
             'tipoColheita': forms.Select(attrs={'class': 'form-control'}),
             'situacao_vassoura_bruxa': forms.Select(attrs={'class': 'form-control', 'id': 'id_situacao_vassoura_bruxa'})
         }
@@ -276,18 +286,37 @@ class ColheitaForm(forms.ModelForm):
            super().__init__(*args, **kwargs)
            self.fields['cultura'].required = True
            self.fields['cultura'].queryset = Cultura.objects.all().order_by('nome')
-           self.fields['variedade'].queryset = Variedade.objects.all().order_by('nome')
            self.fields['quadra'].queryset = Quadra.objects.all().order_by('nome')
            self.fields['tipoColheita'].queryset = TipoColheita.objects.all().order_by('nome')
            self.fields['situacao_vassoura_bruxa'].required = False
+           self.fields['variedade'].queryset = self._get_variedades_queryset()
            for field_name, field in self.fields.items():
                if field.required:
                    self.fields[field_name].label = f'{field.label} *'
 
+    def _get_variedades_queryset(self):
+        queryset = Variedade.objects.select_related('cultura').order_by('nome')
+
+        cultura_id = self.data.get('cultura') if self.is_bound else None
+        if not cultura_id and self.instance and self.instance.pk and self.instance.cultura_id:
+            cultura_id = self.instance.cultura_id
+
+        if cultura_id:
+            queryset = queryset.filter(cultura_id=cultura_id)
+
+        if self.instance and self.instance.pk and self.instance.variedade_id:
+            queryset = (queryset | Variedade.objects.filter(pk=self.instance.variedade_id)).distinct().order_by('nome')
+
+        return queryset
+
     def clean(self):
         cleaned_data = super().clean()
         cultura = cleaned_data.get('cultura')
+        variedade = cleaned_data.get('variedade')
         situacao = cleaned_data.get('situacao_vassoura_bruxa', '')
+
+        if cultura and variedade and variedade.cultura_id and variedade.cultura_id != cultura.id:
+            self.add_error('variedade', 'Selecione uma variedade compativel com a cultura informada.')
 
         if cultura and 'cacau' in cultura.nome.strip().lower():
             if not situacao:

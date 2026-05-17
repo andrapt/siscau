@@ -11,6 +11,46 @@
     SISCau - Sistema de Controle Agrícola
 {% endblock %} 
 
+{% block extra_css %}
+<style>
+    .colheita-card-grid .colheita-card-col {
+        display: flex;
+    }
+
+    .colheita-card {
+        width: 100%;
+        height: 100%;
+    }
+
+    .colheita-card .card-body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .colheita-card-item {
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .colheita-card-item:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+        margin-bottom: 0;
+    }
+
+    .colheita-card-total {
+        font-size: 1.15rem;
+        font-weight: 700;
+    }
+
+    .colheita-card-subtitle {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %} 
     <div class="app-content-top-area">
           <!--begin::Container-->
@@ -45,6 +85,100 @@
 
 
         <div class="container-fluid">
+            {% if resumo_geral_culturas %}
+                <div class="row mb-2">
+                    <div class="col-sm-12">
+                        <h5>Resumo Geral por Cultura</h5>
+                    </div>
+                </div>
+                <div class="row colheita-card-grid">
+                    {% for resumo in resumo_geral_culturas %}
+                        <div class="col-12 col-md-6 col-xl-3 mb-3 colheita-card-col">
+                            <div class="card card-outline {% if resumo.eh_cacau %}card-dark{% else %}card-primary{% endif %} colheita-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">{{ resumo.cultura_nome }}</h3>
+                                    <div class="card-tools">
+                                        {% if resumo.eh_cacau %}
+                                            <span class="badge badge-dark">Cacau</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="colheita-card-item">
+                                        <div class="colheita-card-subtitle">Total colhido</div>
+                                        <div class="colheita-card-total">
+                                            {% if resumo.eh_cacau %}
+                                                {{ resumo.total_arrobas|floatformat:2 }} @
+                                            {% else %}
+                                                {{ resumo.total_peso|floatformat:2 }} kg
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% if resumo.eh_cacau %}
+                                        <div class="colheita-card-item">
+                                            <span class="badge badge-danger">Com vassoura</span>
+                                            <div class="colheita-card-total mt-2">{{ resumo.com_vassoura_arrobas|floatformat:2 }} @</div>
+                                        </div>
+                                        <div class="colheita-card-item">
+                                            <span class="badge badge-success">Sem vassoura</span>
+                                            <div class="colheita-card-total mt-2">{{ resumo.sem_vassoura_arrobas|floatformat:2 }} @</div>
+                                        </div>
+                                        <div class="colheita-card-item">
+                                            <span class="badge badge-secondary">Não informado</span>
+                                            <div class="colheita-card-total mt-2">{{ resumo.nao_informado_arrobas|floatformat:2 }} @</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if cards_quadras %}
+                <div class="row mb-2">
+                    <div class="col-sm-12">
+                        <h5>Resumo por Quadra</h5>
+                    </div>
+                </div>
+                <div class="row colheita-card-grid">
+                    {% for card in cards_quadras %}
+                        <div class="col-12 col-md-6 col-xl-3 mb-3 colheita-card-col">
+                            <div class="card card-outline {% if card.tem_cacau %}card-secondary{% else %}card-primary{% endif %} colheita-card">
+                                <div class="card-header">
+                                    <h3 class="card-title">{{ card.quadra_nome }}</h3>
+                                </div>
+                                <div class="card-body">
+                                    {% for cultura in card.culturas %}
+                                        <div class="colheita-card-item">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <strong>Cultura:</strong> {{ cultura.cultura_nome }}
+                                                <div>
+                                                {% if cultura.eh_cacau %}
+                                                    <span class="badge badge-dark ml-2">Cacau</span>
+                                                    <span class="badge {{ cultura.badge_class }} ml-1">{{ cultura.situacao_label }}</span>
+                                                {% endif %}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div class="colheita-card-subtitle">Colhido</div>
+                                                <div class="colheita-card-total">
+                                                {% if cultura.eh_cacau %}
+                                                    {{ cultura.total_arrobas|floatformat:2 }} @
+                                                {% else %}
+                                                    {{ cultura.total_peso|floatformat:2 }} kg
+                                                {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
             <div class="card">
               <!-- /.card-header -->
               <div class="card-body">
@@ -78,11 +212,11 @@
                         <th>Data</th>
                         <th>Ano</th>
                         <th>Quadra</th>
+                        <th>Cultura</th>
                         <th>Variedade</th>
                         <th>Tipo</th>
                         <th>Peso (kg)</th>
-                        <th>Preço (R$/kg)</th>
-                        <th>Valor Total (R$)</th>
+                        <th>Vassoura de Bruxa</th>
                         <th>Ações</th>
                      </tr>
                     </thead>
@@ -93,11 +227,11 @@
                             <td>{{ colheita.data|date:"d/m/Y" }}</td>
                             <td>{{ colheita.ano }}</td>
                             <td>{{ colheita.quadra.nome }}</td>
+                            <td>{{ colheita.cultura.nome|default:"-" }}</td>
                             <td>{{ colheita.variedade.nome }}</td>
                             <td>{{ colheita.tipoColheita.nome }}</td>
                             <td>{{ colheita.peso }}</td>
-                            <td>{{ colheita.preco }}</td>
-                            <td>{{ colheita.valorTotal }}</td>
+                            <td>{{ colheita.get_situacao_vassoura_bruxa_display|default:"-" }}</td>
                             <td> 
                               <a href="{% url 'editar_colheita' id=colheita.id %}" class="btn btn-primary btn-sm">Editar</a> 
                               <a href="{% url 'excluir_colheita' id=colheita.id %}" class="delete-btn btn btn-danger btn-sm">Excluir</a>

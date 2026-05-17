@@ -132,35 +132,13 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="{{ form.peso.id_for_label }}">{{ form.peso.label }}</label>
                                             {{ form.peso }}
                                             {% if form.peso.errors %}
                                                 <div class="text-danger">
                                                     {{ form.peso.errors }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="{{ form.preco.id_for_label }}">{{ form.preco.label }}</label>
-                                            {{ form.preco }}
-                                            {% if form.preco.errors %}
-                                                <div class="text-danger">
-                                                    {{ form.preco.errors }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label for="{{ form.valorTotal.id_for_label }}">{{ form.valorTotal.label }}</label>
-                                            {{ form.valorTotal }}
-                                            {% if form.valorTotal.errors %}
-                                                <div class="text-danger">
-                                                    {{ form.valorTotal.errors }}
                                                 </div>
                                             {% endif %}
                                         </div>
@@ -188,23 +166,37 @@
             </div>
         </div>
     </section>
+{{ variedades_data|json_script:"variedades-data" }}
 <script>
-    function calcularValorTotal() {
-        const peso = parseFloat(document.getElementById('peso').value) || 0;
-        const preco = parseFloat(document.getElementById('preco').value) || 0;
-        const valorTotal = peso * preco;
-        document.getElementById('valorTotal').value = valorTotal.toFixed(2);
-    }
-
-    // Adicionar eventos para recalcular quando os valores mudarem
     document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('peso').addEventListener('input', calcularValorTotal);
-        document.getElementById('preco').addEventListener('input', calcularValorTotal);
+        const campoCultura = document.getElementById('id_cultura');
+        const campoVariedade = document.getElementById('id_variedade');
+        const campoVassoura = document.getElementById('id_situacao_vassoura_bruxa');
+        const grupoVassoura = document.getElementById('grupo-vassoura-bruxa');
+        const variedades = JSON.parse(document.getElementById('variedades-data').textContent);
+        const variedadeSelecionadaInicial = campoVariedade.value;
+
+        function atualizarOpcoesVariedade() {
+            const culturaId = campoCultura.value;
+            const valorAtual = campoVariedade.value || variedadeSelecionadaInicial;
+            const opcoesFiltradas = variedades.filter(function(variedade) {
+                return String(variedade.cultura_id || '') === String(culturaId || '');
+            });
+
+            campoVariedade.innerHTML = '<option value="">---------</option>';
+
+            opcoesFiltradas.forEach(function(variedade) {
+                const option = document.createElement('option');
+                option.value = variedade.id;
+                option.textContent = variedade.nome;
+                if (String(variedade.id) === String(valorAtual)) {
+                    option.selected = true;
+                }
+                campoVariedade.appendChild(option);
+            });
+        }
 
         function alternarCampoVassouraBruxa() {
-            const campoCultura = document.getElementById('id_cultura');
-            const grupoVassoura = document.getElementById('grupo-vassoura-bruxa');
-            const campoVassoura = document.getElementById('id_situacao_vassoura_bruxa');
             const textoSelecionado = campoCultura.options[campoCultura.selectedIndex]?.text.toLowerCase() || '';
             const ehCacau = textoSelecionado.includes('cacau');
 
@@ -215,10 +207,12 @@
             }
         }
 
-        document.getElementById('id_cultura').addEventListener('change', alternarCampoVassouraBruxa);
-        
-        // Calcular inicialmente se os valores já estiverem preenchidos
-        calcularValorTotal();
+        campoCultura.addEventListener('change', function() {
+            atualizarOpcoesVariedade();
+            alternarCampoVassouraBruxa();
+        });
+
+        atualizarOpcoesVariedade();
         alternarCampoVassouraBruxa();
     });
 </script>

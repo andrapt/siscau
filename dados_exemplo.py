@@ -42,7 +42,8 @@ for var in variedades:
     try:
         Variedade.objects.get(nome=var["nome"])
     except Variedade.DoesNotExist:
-        Variedade.objects.create(nome=var["nome"], descricao=var["descricao"])
+        cultura_cacau = Cultura.objects.filter(nome="Cacau").first()
+        Variedade.objects.create(nome=var["nome"], descricao=var["descricao"], cultura=cultura_cacau)
         print(f"Variedade {var['nome']} criada com sucesso!")
 
 # Criar culturas
@@ -159,18 +160,11 @@ for mes in range(1, 13):
             # Peso aleatório entre 50 e 200 arrobas
             peso = round(random.uniform(50, 200), 2)
             
-            # Preço aleatório entre R$ 150 e R$ 250 por arroba
-            preco = round(random.uniform(150, 250), 2)
-            
-            # Valor total
-            valor_total = round(peso * preco, 2)
-            
             Colheita.objects.create(
                 data=data,
                 ano=ano_atual,
                 peso=peso,
-                preco=preco,
-                valorTotal=valor_total,
+                cultura=variedade.cultura,
                 descricao=f"Colheita de {variedade.nome}",
                 quadra=quadra,
                 variedade=variedade,

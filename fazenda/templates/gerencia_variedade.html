@@ -54,13 +54,24 @@
                                 {% endif %}
                                 
                                 <div class="row">
-                                    <div class="col-md-12">
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label>{{ form.nome.label }}</label>
                                             {{ form.nome }}
                                             {% if form.nome.errors %}
                                                 <div class="text-danger">
                                                     {{ form.nome.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.cultura.label }}</label>
+                                            {{ form.cultura }}
+                                            {% if form.cultura.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.cultura.errors }}
                                                 </div>
                                             {% endif %}
                                         </div>

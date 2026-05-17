@@ -31,9 +31,9 @@ def index(request):
     despesas_ano_qs = Despesa.objects.filter(data__year=ano_atual)
     total_despesas = despesas_ano_qs.aggregate(total=Sum('valor'))['total'] or 0
     
-    # Calcula o total de receitas (colheitas) do ano atual
+    # A colheita nao registra mais dados financeiros.
     colheitas_ano = Colheita.objects.filter(data__year=ano_atual)
-    total_receitas = sum(colheita.valorTotal for colheita in colheitas_ano)
+    total_receitas = 0
     
     # Calcula o saldo total
     total_geral = total_receitas - total_despesas
@@ -52,12 +52,6 @@ def index(request):
             mes = data_despesa.month - 1  # Ajusta para índice 0-11
             dados_despesas[mes] += float(valor)
     
-    # Agrupa receitas por mês
-    for colheita in colheitas_ano:
-        if colheita.data:
-            mes = colheita.data.month - 1  # Ajusta para índice 0-11
-            dados_receitas[mes] += float(colheita.valorTotal)
-
     # Despesas por categoria (ano corrente)
     despesas_por_categoria_qs = (
         Despesa.objects
@@ -725,6 +719,101 @@ def listaColheitas(request):
             Q(variedade__nome__icontains=pesquisa)
         )
 
+    resumo_geral_query = (
+        colheitas.values('cultura__nome', 'situacao_vassoura_bruxa')
+        .annotate(total_peso=Sum('peso'))
+        .order_by('cultura__nome', 'situacao_vassoura_bruxa')
+    )
+
+    resumo_geral_map = {}
+    for item in resumo_geral_query:
+        cultura_nome = item['cultura__nome'] or 'Sem cultura'
+        total_peso = item['total_peso'] or 0
+        eh_cacau = 'cacau' in cultura_nome.lower()
+
+        if cultura_nome not in resumo_geral_map:
+            resumo_geral_map[cultura_nome] = {
+                'cultura_nome': cultura_nome,
+                'total_peso': 0,
+                'total_arrobas': 0,
+                'eh_cacau': eh_cacau,
+                'com_vassoura_peso': 0,
+                'com_vassoura_arrobas': 0,
+                'sem_vassoura_peso': 0,
+                'sem_vassoura_arrobas': 0,
+                'nao_informado_peso': 0,
+                'nao_informado_arrobas': 0,
+            }
+
+        resumo_geral_map[cultura_nome]['total_peso'] += total_peso
+        if eh_cacau:
+            resumo_geral_map[cultura_nome]['total_arrobas'] += total_peso / 15
+            situacao = item['situacao_vassoura_bruxa'] or ''
+            if situacao == 'COM':
+                resumo_geral_map[cultura_nome]['com_vassoura_peso'] += total_peso
+                resumo_geral_map[cultura_nome]['com_vassoura_arrobas'] += total_peso / 15
+            elif situacao == 'SEM':
+                resumo_geral_map[cultura_nome]['sem_vassoura_peso'] += total_peso
+                resumo_geral_map[cultura_nome]['sem_vassoura_arrobas'] += total_peso / 15
+            else:
+                resumo_geral_map[cultura_nome]['nao_informado_peso'] += total_peso
+                resumo_geral_map[cultura_nome]['nao_informado_arrobas'] += total_peso / 15
+
+    resumo_geral_culturas = list(resumo_geral_map.values())
+
+    resumo_por_quadra_query = (
+        colheitas.values(
+            'quadra_id',
+            'quadra__nome',
+            'cultura__nome',
+            'situacao_vassoura_bruxa',
+        )
+        .annotate(total_peso=Sum('peso'))
+        .order_by('quadra__nome', 'cultura__nome', 'situacao_vassoura_bruxa')
+    )
+
+    cards_quadras = []
+    card_atual = None
+    quadra_atual_id = None
+
+    for item in resumo_por_quadra_query:
+        if item['quadra_id'] != quadra_atual_id:
+            card_atual = {
+                'quadra_nome': item['quadra__nome'],
+                'culturas': [],
+                'tem_cacau': False,
+            }
+            cards_quadras.append(card_atual)
+            quadra_atual_id = item['quadra_id']
+
+        cultura_nome = item['cultura__nome'] or 'Sem cultura'
+        total_peso = item['total_peso'] or 0
+        eh_cacau = 'cacau' in cultura_nome.lower()
+        situacao_vassoura = item['situacao_vassoura_bruxa'] or ''
+        badge_class = 'badge-secondary'
+        situacao_label = None
+
+        if eh_cacau:
+            card_atual['tem_cacau'] = True
+            if situacao_vassoura == 'COM':
+                badge_class = 'badge-danger'
+                situacao_label = 'Com vassoura de bruxa'
+            elif situacao_vassoura == 'SEM':
+                badge_class = 'badge-success'
+                situacao_label = 'Sem vassoura de bruxa'
+            else:
+                badge_class = 'badge-warning'
+                situacao_label = 'Situação não informada'
+
+        card_atual['culturas'].append({
+            'cultura_nome': cultura_nome,
+            'total_peso': total_peso,
+            'total_arrobas': total_peso / 15 if eh_cacau else None,
+            'eh_cacau': eh_cacau,
+            'situacao_label': situacao_label,
+            'badge_class': badge_class,
+        })
+
     colheitas = colheitas.order_by('-data', '-id')
 
     anos_disponiveis = list(
@@ -743,9 +832,27 @@ def listaColheitas(request):
         "search": pesquisa,
         "ano_selecionado": ano_selecionado,
         "anos_disponiveis": anos_disponiveis,
+        "resumo_geral_culturas": resumo_geral_culturas,
+        "cards_quadras": cards_quadras,
     }
     
     return render(request, "colheita/lista_colheitas.html", context)
+
+
+def _colheita_contexto_formulario(form, editar=False):
+    variedades_data = [
+        {
+            "id": variedade.id,
+            "nome": variedade.nome,
+            "cultura_id": variedade.cultura_id,
+        }
+        for variedade in Variedade.objects.select_related('cultura').order_by('nome')
+    ]
+    return {
+        "form": form,
+        "editar": editar,
+        "variedades_data": variedades_data,
+    }
 
 def editarColheita(request, id):
     colheita = get_object_or_404(Colheita, id=id)
@@ -758,7 +865,7 @@ def editarColheita(request, id):
     else:
         form = ColheitaForm(instance=colheita)
 
-    return render(request, "colheita/gerencia_colheita.html", {"form": form, 'editar':True})
+    return render(request, "colheita/gerencia_colheita.html", _colheita_contexto_formulario(form, editar=True))
 
 def cadastrarColheita(request):
     if request.method == "POST":
@@ -770,7 +877,7 @@ def cadastrarColheita(request):
     else:
         form = ColheitaForm()
 
-    return render(request, "colheita/gerencia_colheita.html", {"form": form})
+    return render(request, "colheita/gerencia_colheita.html", _colheita_contexto_formulario(form))
 
 def excluirColheita(request, id):
     colheita = get_object_or_404(Colheita, id=id)

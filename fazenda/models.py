@@ -13,6 +13,7 @@ class Fazenda (models.Model):
 
 class Variedade (models.Model):    
     nome = models.CharField(max_length=100)
+    cultura = models.ForeignKey('Cultura', on_delete=models.SET_NULL, null=True, blank=True)
     descricao = models.TextField()
 
     class Meta:
@@ -125,8 +126,6 @@ class Colheita (models.Model):
     data = models.DateField(null=True, blank=True)
     ano = models.IntegerField(default=2025)
     peso = models.DecimalField(max_digits=6, decimal_places=2)     
-    preco = models.DecimalField(max_digits=6, decimal_places=2) # R$/kg
-    valorTotal = models.DecimalField(max_digits=6, decimal_places=2)
     descricao = models.TextField(null=True, blank=True) 
     quadra = models.ForeignKey(Quadra, on_delete=models.CASCADE)
     cultura = models.ForeignKey(Cultura, on_delete=models.SET_NULL, null=True, blank=True)
