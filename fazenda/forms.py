@@ -1,5 +1,7 @@
+from decimal import Decimal
+
 from django import forms
-from .models import Cultura, Variedade, TipoInsumo, Insumo, TipoAtividade, Colheita, Quadra, Categoria, TipoColheita, Despesa, Manejo, CalendarioAgricola, Financiamento, ParcelaFinanciamento
+from .models import Cultura, Variedade, TipoInsumo, Insumo, TipoAtividade, Colheita, Quadra, Categoria, TipoColheita, Despesa, ParcelaDespesa, PagamentoDespesa, Manejo, CalendarioAgricola, Financiamento, ParcelaFinanciamento
 
 class CulturaForm(forms.ModelForm):
     class Meta:
@@ -230,16 +232,22 @@ class DespesaForm(forms.ModelForm):
         labels = { 
             'categoria': 'Categoria',
             'data': 'Data',
+            'data_primeiro_vencimento': 'Primeiro Vencimento',
             'valor': 'Valor',
             'descricao': 'Descrição da despesa',
-            'fonte': 'Fonte de Despesa'
+            'fonte': 'Fonte de Despesa',
+            'status': 'Status',
+            'quantidade_parcelas': 'Quantidade de Parcelas',
         }
         widgets = {
             'categoria': forms.Select(attrs={'class': 'form-control'}),
             'data': forms.DateInput(attrs={'type': 'date','style': 'width: 100%;height: 40px; margin: 0 auto; display: block;','class': 'form-control'}, format='%Y-%m-%d'),
-            'valor': forms.TextInput(attrs={'class': 'form-control','placeholder': 'Digite a área da quadra'}),
+            'data_primeiro_vencimento': forms.DateInput(attrs={'type': 'date','style': 'width: 100%;height: 40px; margin: 0 auto; display: block;','class': 'form-control'}, format='%Y-%m-%d'),
+            'valor': forms.NumberInput(attrs={'class': 'form-control','placeholder': 'Digite o valor total da despesa', 'step': '0.01', 'min': '0.01'}),
             'descricao': forms.Textarea(attrs={'class': 'form-control'}),
-            'fonte': forms.Select(attrs={'class': 'form-control'})
+            'fonte': forms.Select(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'quantidade_parcelas': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
         }
 
     def clean_nome(self):
@@ -250,9 +258,142 @@ class DespesaForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
            super().__init__(*args, **kwargs)
+           self.fields['status'].disabled = True
            for field_name, field in self.fields.items():
                if field.required:
                    self.fields[field_name].label = f'{field.label} *'
+
+    def clean_quantidade_parcelas(self):
+        quantidade = self.cleaned_data.get('quantidade_parcelas') or 1
+        if quantidade < 1:
+            raise forms.ValidationError('Informe pelo menos 1 parcela.')
+        return quantidade
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if not instance.pk:
+            instance.status = 'aberta'
+        else:
+            instance.atualizar_status(save=False)
+        if commit:
+            instance.save()
+        return instance
+
+
+class PagamentoDespesaForm(forms.ModelForm):
+    class Meta:
+        model = PagamentoDespesa
+        fields = ['parcela', 'data_pagamento', 'valor', 'numero_parcela', 'observacao']
+        labels = {
+            'parcela': 'Parcela Prevista',
+            'data_pagamento': 'Data do Pagamento',
+            'valor': 'Valor Pago',
+            'numero_parcela': 'Numero da Parcela',
+            'observacao': 'Observacao',
+        }
+        widgets = {
+            'parcela': forms.Select(attrs={'class': 'form-control'}),
+            'data_pagamento': forms.DateInput(
+                attrs={'type': 'date', 'class': 'form-control'},
+                format='%Y-%m-%d'
+            ),
+            'valor': forms.NumberInput(
+                attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01'}
+            ),
+            'numero_parcela': forms.NumberInput(
+                attrs={'class': 'form-control', 'min': '1'}
+            ),
+            'observacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+
+    def __init__(self, *args, despesa=None, **kwargs):
+        self.despesa = despesa
+        super().__init__(*args, **kwargs)
+        self.fields['parcela'].required = False
+        if despesa:
+            self.fields['parcela'].queryset = despesa.parcelas.all()
+        else:
+            self.fields['parcela'].queryset = ParcelaDespesa.objects.none()
+        for field_name, field in self.fields.items():
+            if field.required:
+                self.fields[field_name].label = f'{field.label} *'
+
+    def clean_valor(self):
+        valor = self.cleaned_data.get('valor')
+        if valor is None or valor <= 0:
+            raise forms.ValidationError('Informe um valor de pagamento maior que zero.')
+        return valor
+
+    def clean_numero_parcela(self):
+        numero = self.cleaned_data.get('numero_parcela')
+        if numero and numero < 1:
+            raise forms.ValidationError('O numero da parcela deve ser maior que zero.')
+        return numero
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not self.despesa:
+            raise forms.ValidationError('Despesa não informada para o pagamento.')
+
+        valor = cleaned_data.get('valor')
+        if valor is None:
+            return cleaned_data
+
+        total_existente = self.despesa.total_pago
+        if self.instance.pk:
+            total_existente -= Decimal(self.instance.valor or 0)
+        if total_existente + valor > self.despesa.valor:
+            self.add_error('valor', 'O total de pagamentos nao pode ultrapassar o valor da despesa.')
+
+        numero = cleaned_data.get('numero_parcela')
+        if numero and numero > self.despesa.quantidade_parcelas:
+            self.add_error('numero_parcela', 'O numero da parcela nao pode ser maior que a quantidade de parcelas da despesa.')
+
+        parcela = cleaned_data.get('parcela')
+        if parcela:
+            cleaned_data['numero_parcela'] = parcela.numero_parcela
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.despesa = self.despesa
+        if commit:
+            instance.save()
+        return instance
+
+
+class BaixaParcelasDespesaForm(forms.Form):
+    parcelas = forms.ModelMultipleChoiceField(
+        queryset=ParcelaDespesa.objects.none(),
+        required=True,
+        widget=forms.CheckboxSelectMultiple,
+        label='Parcelas para Baixa'
+    )
+    data_pagamento = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        label='Data do Pagamento'
+    )
+    observacao = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        label='Observacao'
+    )
+
+    def __init__(self, *args, despesa=None, **kwargs):
+        self.despesa = despesa
+        super().__init__(*args, **kwargs)
+        if despesa:
+            self.fields['parcelas'].queryset = despesa.parcelas.exclude(status='paga')
+        for field_name, field in self.fields.items():
+            if field.required:
+                self.fields[field_name].label = f'{field.label} *'
+
+    def clean_parcelas(self):
+        parcelas = self.cleaned_data.get('parcelas')
+        if not parcelas:
+            raise forms.ValidationError('Selecione pelo menos uma parcela para baixar.')
+        return parcelas
 
 
 class ColheitaForm(forms.ModelForm):

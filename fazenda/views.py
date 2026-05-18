@@ -5,8 +5,8 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Sum, Min
 from datetime import date
 import locale
-from .models import Cultura, Variedade, Insumo, TipoInsumo, Fazenda, TipoAtividade, Quadra, Categoria, TipoColheita, Despesa, Colheita, Manejo, CalendarioAgricola, Financiamento, ParcelaFinanciamento
-from .forms import CulturaForm, VariedadeForm, InsumoForm, TipoInsumoForm, TipoAtividadeForm, QuadraForm, CategoriaForm, TipoColheitaForm, DespesaForm, ColheitaForm, ManejoForm, CalendarioAgricolaForm, FinanciamentoForm, ParcelaFinanciamentoForm
+from .models import Cultura, Variedade, Insumo, TipoInsumo, Fazenda, TipoAtividade, Quadra, Categoria, TipoColheita, Despesa, PagamentoDespesa, Colheita, Manejo, CalendarioAgricola, Financiamento, ParcelaFinanciamento
+from .forms import CulturaForm, VariedadeForm, InsumoForm, TipoInsumoForm, TipoAtividadeForm, QuadraForm, CategoriaForm, TipoColheitaForm, DespesaForm, PagamentoDespesaForm, BaixaParcelasDespesaForm, ColheitaForm, ManejoForm, CalendarioAgricolaForm, FinanciamentoForm, ParcelaFinanciamentoForm
 # import locale
 # Página inicial do sistema
 @login_required
@@ -640,55 +640,159 @@ def excluirTipoColheita(request, id):
 def listaDespesas(request):
 
     # busca do request a informação de pesquisa caso o usuário tenha feito
-    pesquisa = request.GET.get("search")
+    pesquisa = request.GET.get("search", "").strip()
+    status = request.GET.get("status", "").strip()
     
     """ 
         Lista todas as despesas cadastradas no sistema
     """
+    despesas_base = Despesa.objects.select_related('categoria').all()
     if pesquisa:
-        despesas = Despesa.objects.filter(descricao__icontains=pesquisa).order_by('-data')
-    else:
-        despesas = Despesa.objects.all().order_by('-data')
+        despesas_base = despesas_base.filter(descricao__icontains=pesquisa)
+    despesas = despesas_base
+    if status:
+        despesas = despesas.filter(status=status)
+    despesas = despesas.order_by('-data', '-id')
 
     # Procedimentos para paginação
     paginator = Paginator(despesas, 10)  # 2 despesas por página
     pagina = request.GET.get('page')
     despesas = paginator.get_page(pagina)   
 
-    context = {"despesas": despesas}
+    resumo_despesas = {
+        'total': despesas_base.count(),
+        'abertas': despesas_base.filter(status='aberta').count(),
+        'parciais': despesas_base.filter(status='parcial').count(),
+        'pagas': despesas_base.filter(status='paga').count(),
+    }
+
+    context = {
+        "despesas": despesas,
+        "resumo_despesas": resumo_despesas,
+        "status_atual": status,
+    }
     
     return render(request, "despesa/lista_despesa.html", context)
 
+
+def _despesa_contexto_formulario(form, despesa=None, pagamento_form=None, baixa_parcelas_form=None):
+    pagamentos = despesa.pagamentos.all() if despesa else []
+    parcelas = despesa.parcelas.all() if despesa else []
+    pagamento_form = pagamento_form or (PagamentoDespesaForm(despesa=despesa) if despesa else None)
+    baixa_parcelas_form = baixa_parcelas_form or (BaixaParcelasDespesaForm(despesa=despesa) if despesa else None)
+
+    return {
+        "form": form,
+        "despesa": despesa,
+        "pagamento_form": pagamento_form,
+        "baixa_parcelas_form": baixa_parcelas_form,
+        "pagamentos": pagamentos,
+        "parcelas": parcelas,
+    }
+
 def editarDespesa(request, id):
     despesa = get_object_or_404(Despesa, id=id)
-    if request.method == "POST":
+
+    if request.method == "POST" and request.POST.get('form_tipo') == 'despesa':
         form = DespesaForm(request.POST, instance=despesa)
         if form.is_valid():
             form.save()
-            messages.success(request, "Registro atualizada com sucesso!")
+            messages.success(request, "Despesa atualizada com sucesso!")
             return redirect('despesas')
+        pagamento_form = PagamentoDespesaForm(despesa=despesa)
+        baixa_parcelas_form = BaixaParcelasDespesaForm(despesa=despesa)
+    elif request.method == "POST" and request.POST.get('form_tipo') == 'pagamento':
+        form = DespesaForm(instance=despesa)
+        pagamento_form = PagamentoDespesaForm(request.POST, despesa=despesa)
+        if pagamento_form.is_valid():
+            pagamento_form.save()
+            messages.success(request, "Pagamento registrado com sucesso!")
+            return redirect('editar_despesa', id=despesa.id)
+        baixa_parcelas_form = BaixaParcelasDespesaForm(despesa=despesa)
+    elif request.method == "POST" and request.POST.get('form_tipo') == 'gerar_parcelas':
+        form = DespesaForm(instance=despesa)
+        pagamento_form = PagamentoDespesaForm(despesa=despesa)
+        baixa_parcelas_form = BaixaParcelasDespesaForm(despesa=despesa)
+        try:
+            quantidade = despesa.gerar_parcelas_previstas()
+            if quantidade:
+                messages.success(request, f"{quantidade} parcela(s) prevista(s) gerada(s) com sucesso!")
+            else:
+                messages.info(request, "As parcelas previstas já estavam atualizadas.")
+            return redirect('editar_despesa', id=despesa.id)
+        except Exception as exc:
+            messages.error(request, str(exc))
+    elif request.method == "POST" and request.POST.get('form_tipo') == 'baixar_parcelas':
+        form = DespesaForm(instance=despesa)
+        pagamento_form = PagamentoDespesaForm(despesa=despesa)
+        baixa_parcelas_form = BaixaParcelasDespesaForm(request.POST, despesa=despesa)
+        if baixa_parcelas_form.is_valid():
+            data_pagamento = baixa_parcelas_form.cleaned_data['data_pagamento']
+            observacao = baixa_parcelas_form.cleaned_data['observacao']
+            parcelas = baixa_parcelas_form.cleaned_data['parcelas']
+            pagamentos_criados = 0
+
+            for parcela in parcelas:
+                saldo = parcela.saldo_pendente
+                if saldo <= 0:
+                    continue
+                PagamentoDespesa.objects.create(
+                    despesa=despesa,
+                    parcela=parcela,
+                    data_pagamento=data_pagamento,
+                    valor=saldo,
+                    numero_parcela=parcela.numero_parcela,
+                    observacao=observacao or f'Baixa da parcela {parcela.numero_parcela}',
+                )
+                pagamentos_criados += 1
+
+            messages.success(request, f"{pagamentos_criados} parcela(s) baixada(s) com sucesso!")
+            return redirect('editar_despesa', id=despesa.id)
     else:
         form = DespesaForm(instance=despesa)
+        pagamento_form = PagamentoDespesaForm(despesa=despesa)
+        baixa_parcelas_form = BaixaParcelasDespesaForm(despesa=despesa)
 
-    return render(request, "despesa/gerencia_despesa.html", {"form": form, 'editar':True})
+    return render(
+        request,
+        "despesa/gerencia_despesa.html",
+        {
+            **_despesa_contexto_formulario(
+                form,
+                despesa=despesa,
+                pagamento_form=pagamento_form,
+                baixa_parcelas_form=baixa_parcelas_form,
+            ),
+            'editar': True,
+        }
+    )
 
 def cadastrarDespesa(request):
     if request.method == "POST":
         form = DespesaForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Registro cadastrado com sucesso!")
+            messages.success(request, "Despesa cadastrada com sucesso!")
             return redirect('despesas')
     else:
         form = DespesaForm()
 
-    return render(request, "despesa/gerencia_despesa.html", {"form": form})
+    return render(request, "despesa/gerencia_despesa.html", _despesa_contexto_formulario(form))
 
 def excluirDespesa(request, id):
     despesa = get_object_or_404(Despesa, id=id)
     despesa.delete()
     messages.success(request, "Registro excluído com sucesso!")
     return redirect('despesas')
+
+
+@login_required
+def excluirPagamentoDespesa(request, id):
+    pagamento = get_object_or_404(PagamentoDespesa, id=id)
+    despesa_id = pagamento.despesa_id
+    pagamento.delete()
+    messages.success(request, "Pagamento excluído com sucesso!")
+    return redirect('editar_despesa', id=despesa_id)
 
 
 

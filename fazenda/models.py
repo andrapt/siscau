@@ -1,4 +1,10 @@
-from django.db import models
+from calendar import monthrange
+from datetime import date as date_cls
+from decimal import Decimal
+
+from django.core.exceptions import ValidationError
+from django.db import models, transaction
+from django.db.models import Sum
     
 class Fazenda (models.Model):
     nome = models.CharField(max_length=45)
@@ -163,17 +169,259 @@ class Despesa (models.Model):
         ('ALBERTH_COUTO', 'Alberth Couto'),
         ('LAURA_MARIA', 'Laura Maria'),
     ]
+    STATUS_CHOICES = [
+        ('aberta', 'Aberta'),
+        ('parcial', 'Parcial'),
+        ('paga', 'Paga'),
+    ]
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
     data = models.DateField(null=True, blank=True)
+    data_primeiro_vencimento = models.DateField(null=True, blank=True)
     descricao = models.CharField(max_length=256)  
     valor = models.DecimalField(max_digits=6, decimal_places=2)
     fonte = models.CharField(max_length=20, choices=FONTE_DESPESA_CHOICES, default='RECURSOS_FAZENDA')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='aberta')
+    quantidade_parcelas = models.PositiveIntegerField(default=1)
     
     class Meta:
         db_table = 'despesa'
 
     def __str__(self):
         return self.descricao
+
+    @property
+    def total_pago(self):
+        total = self.pagamentos.aggregate(total=Sum('valor'))['total']
+        return total or Decimal('0')
+
+    @property
+    def saldo_pendente(self):
+        saldo = Decimal(self.valor or 0) - self.total_pago
+        return saldo if saldo > 0 else Decimal('0')
+
+    @property
+    def quantidade_pagamentos(self):
+        return self.pagamentos.count()
+
+    @property
+    def quantidade_parcelas_previstas(self):
+        return self.parcelas.count()
+
+    @property
+    def possui_parcelas_previstas(self):
+        return self.parcelas.exists()
+
+    def atualizar_status(self, save=True):
+        total_pago = self.total_pago
+        valor_total = Decimal(self.valor or 0)
+
+        if total_pago <= 0:
+            self.status = 'aberta'
+        elif total_pago < valor_total:
+            self.status = 'parcial'
+        else:
+            self.status = 'paga'
+
+        if save:
+            self.save(update_fields=['status'])
+        return self.status
+
+    def _somar_meses(self, data_base, meses):
+        novo_mes = data_base.month - 1 + meses
+        ano = data_base.year + novo_mes // 12
+        mes = novo_mes % 12 + 1
+        dia = min(data_base.day, monthrange(ano, mes)[1])
+        return date_cls(ano, mes, dia)
+
+    def gerar_parcelas_previstas(self):
+        if self.quantidade_parcelas < 1:
+            raise ValidationError('A despesa deve ter pelo menos uma parcela.')
+
+        data_base = self.data_primeiro_vencimento or self.data
+        if not data_base:
+            raise ValidationError('Informe a data do primeiro vencimento para gerar as parcelas.')
+
+        parcelas_existentes = list(self.parcelas.all())
+        parcelas_excedentes = [
+            parcela for parcela in parcelas_existentes
+            if parcela.numero_parcela > self.quantidade_parcelas
+        ]
+        if any(parcela.total_pago > 0 for parcela in parcelas_excedentes):
+            raise ValidationError(
+                'Nao e possivel reduzir a quantidade de parcelas porque existem pagamentos vinculados as parcelas excedentes.'
+            )
+
+        total_centavos = int((Decimal(self.valor) * 100).quantize(Decimal('1')))
+        quantidade = self.quantidade_parcelas
+        valor_base = total_centavos // quantidade
+        restante = total_centavos % quantidade
+
+        parcelas_criadas = 0
+        parcelas_existentes_map = {
+            parcela.numero_parcela: parcela
+            for parcela in parcelas_existentes
+        }
+
+        with transaction.atomic():
+            for numero in range(1, quantidade + 1):
+                valor_centavos = valor_base + (1 if numero <= restante else 0)
+                valor_previsto = Decimal(valor_centavos) / Decimal('100')
+                data_vencimento = self._somar_meses(data_base, numero - 1)
+
+                parcela = parcelas_existentes_map.get(numero)
+                if parcela:
+                    alterou = False
+                    if parcela.valor_previsto != valor_previsto:
+                        parcela.valor_previsto = valor_previsto
+                        alterou = True
+                    if parcela.data_vencimento != data_vencimento:
+                        parcela.data_vencimento = data_vencimento
+                        alterou = True
+                    if alterou:
+                        parcela.save(update_fields=['valor_previsto', 'data_vencimento'])
+                    parcela.atualizar_status()
+                    continue
+
+                ParcelaDespesa.objects.create(
+                    despesa=self,
+                    numero_parcela=numero,
+                    data_vencimento=data_vencimento,
+                    valor_previsto=valor_previsto,
+                )
+                parcelas_criadas += 1
+
+            if parcelas_excedentes:
+                ParcelaDespesa.objects.filter(
+                    despesa=self,
+                    numero_parcela__gt=quantidade
+                ).delete()
+
+        return parcelas_criadas
+
+
+class ParcelaDespesa(models.Model):
+    STATUS_CHOICES = [
+        ('aberta', 'Aberta'),
+        ('parcial', 'Parcial'),
+        ('paga', 'Paga'),
+    ]
+
+    despesa = models.ForeignKey(Despesa, on_delete=models.CASCADE, related_name='parcelas')
+    numero_parcela = models.PositiveIntegerField()
+    data_vencimento = models.DateField()
+    valor_previsto = models.DecimalField(max_digits=6, decimal_places=2)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='aberta')
+
+    class Meta:
+        db_table = 'parcela_despesa'
+        ordering = ['numero_parcela']
+        unique_together = ['despesa', 'numero_parcela']
+
+    def __str__(self):
+        return f'Parcela {self.numero_parcela} - {self.despesa.descricao}'
+
+    @property
+    def total_pago(self):
+        total = self.pagamentos.aggregate(total=Sum('valor'))['total']
+        return total or Decimal('0')
+
+    @property
+    def saldo_pendente(self):
+        saldo = Decimal(self.valor_previsto or 0) - self.total_pago
+        return saldo if saldo > 0 else Decimal('0')
+
+    def atualizar_status(self, save=True):
+        total_pago = self.total_pago
+        valor_previsto = Decimal(self.valor_previsto or 0)
+
+        if total_pago <= 0:
+            self.status = 'aberta'
+        elif total_pago < valor_previsto:
+            self.status = 'parcial'
+        else:
+            self.status = 'paga'
+
+        if save:
+            self.save(update_fields=['status'])
+        return self.status
+
+
+class PagamentoDespesa(models.Model):
+    despesa = models.ForeignKey(Despesa, on_delete=models.CASCADE, related_name='pagamentos')
+    parcela = models.ForeignKey(ParcelaDespesa, on_delete=models.SET_NULL, null=True, blank=True, related_name='pagamentos')
+    data_pagamento = models.DateField()
+    valor = models.DecimalField(max_digits=6, decimal_places=2)
+    numero_parcela = models.PositiveIntegerField(null=True, blank=True)
+    observacao = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'pagamento_despesa'
+        ordering = ['data_pagamento', 'numero_parcela', 'id']
+
+    def __str__(self):
+        return f'Pagamento {self.id} - {self.despesa.descricao}'
+
+    def clean(self):
+        super().clean()
+
+        if self.valor is not None and self.valor <= 0:
+            raise ValidationError({'valor': 'O valor do pagamento deve ser maior que zero.'})
+
+        if not self.despesa_id or self.valor is None:
+            return
+
+        if self.parcela_id:
+            if self.parcela.despesa_id != self.despesa_id:
+                raise ValidationError({
+                    'parcela': 'A parcela selecionada nao pertence a esta despesa.'
+                })
+
+            total_parcela_existente = (
+                PagamentoDespesa.objects.filter(parcela_id=self.parcela_id)
+                .exclude(pk=self.pk)
+                .aggregate(total=Sum('valor'))['total']
+                or Decimal('0')
+            )
+            if total_parcela_existente + self.valor > self.parcela.valor_previsto:
+                raise ValidationError({
+                    'valor': 'O total pago da parcela nao pode ultrapassar o valor previsto da parcela.'
+                })
+
+        total_existente = (
+            PagamentoDespesa.objects.filter(despesa_id=self.despesa_id)
+            .exclude(pk=self.pk)
+            .aggregate(total=Sum('valor'))['total']
+            or Decimal('0')
+        )
+        total_resultante = total_existente + self.valor
+
+        if total_resultante > self.despesa.valor:
+            raise ValidationError({
+                'valor': 'O total de pagamentos nao pode ultrapassar o valor da despesa.'
+            })
+
+        if self.numero_parcela:
+            if self.numero_parcela > self.despesa.quantidade_parcelas:
+                raise ValidationError({
+                    'numero_parcela': 'O numero da parcela nao pode ser maior que a quantidade de parcelas da despesa.'
+                })
+
+    def save(self, *args, **kwargs):
+        if self.parcela_id and not self.numero_parcela:
+            self.numero_parcela = self.parcela.numero_parcela
+        self.full_clean()
+        super().save(*args, **kwargs)
+        self.despesa.atualizar_status()
+        if self.parcela_id:
+            self.parcela.atualizar_status()
+
+    def delete(self, *args, **kwargs):
+        despesa = self.despesa
+        parcela = self.parcela
+        super().delete(*args, **kwargs)
+        despesa.atualizar_status()
+        if parcela:
+            parcela.atualizar_status()
 
 # Classe de calendário agrícola
 class CalendarioAgricola (models.Model):

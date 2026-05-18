@@ -51,6 +51,7 @@ urlpatterns = [
     path('editar_despesa/<int:id>/', views.editarDespesa, name='editar_despesa'),
     path('cadastrar_despesa/', views.cadastrarDespesa, name='cadastrar_despesa'),
     path('excluir_despesa/<int:id>/', views.excluirDespesa, name='excluir_despesa'),
+    path('excluir_pagamento_despesa/<int:id>/', views.excluirPagamentoDespesa, name='excluir_pagamento_despesa'),
     ################# Rotas para gerenciamento de Colheitas #################
     path('colheitas/', views.listaColheitas, name='colheitas'),
     path('editar_colheita/<int:id>/', views.editarColheita, name='editar_colheita'),

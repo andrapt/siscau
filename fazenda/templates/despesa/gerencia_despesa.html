@@ -37,13 +37,14 @@
     <section class="content">
         <div class="container-fluid">
             <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-8">
                     <div class="card card-primary">
                         <div class="card-header">
                             <h3 class="card-title">{% if editar %}Editar{% else %}Cadastrar{% endif %} Despesa</h3>
                         </div>
                         <form method="post">
                             {% csrf_token %}
+                            <input type="hidden" name="form_tipo" value="despesa">
                             <div class="card-body">
                                 {% if messages %}
                                     {% for message in messages %}
@@ -56,17 +57,6 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label>{{ form.fazenda.label }}</label>
-                                            {{ form.fazenda }}
-                                            {% if form.fazenda.errors %}
-                                                <div class="text-danger">
-                                                    {{ form.fazenda.errors }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
                                             <label>{{ form.categoria.label }}</label>
                                             {{ form.categoria }}
                                             {% if form.categoria.errors %}
@@ -76,9 +66,6 @@
                                             {% endif %}
                                         </div>
                                     </div>
-                                </div>
-                                
-                                <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>{{ form.fonte.label }}</label>
@@ -90,6 +77,9 @@
                                             {% endif %}
                                         </div>
                                     </div>
+                                </div>
+                                
+                                <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>{{ form.data.label }}</label>
@@ -101,8 +91,19 @@
                                             {% endif %}
                                         </div>
                                     </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.data_primeiro_vencimento.label }}</label>
+                                            {{ form.data_primeiro_vencimento }}
+                                            {% if form.data_primeiro_vencimento.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.data_primeiro_vencimento.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </div>
-                                
+
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
@@ -111,6 +112,31 @@
                                             {% if form.valor.errors %}
                                                 <div class="text-danger">
                                                     {{ form.valor.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.quantidade_parcelas.label }}</label>
+                                            {{ form.quantidade_parcelas }}
+                                            {% if form.quantidade_parcelas.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.quantidade_parcelas.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>{{ form.status.label }}</label>
+                                            {{ form.status }}
+                                            {% if form.status.errors %}
+                                                <div class="text-danger">
+                                                    {{ form.status.errors }}
                                                 </div>
                                             {% endif %}
                                         </div>
@@ -137,9 +163,211 @@
                                 <a href="{% url 'despesas' %}" class="btn btn-default">Cancelar</a>
                             </div>
                         </form>
+                        {% if editar %}
+                            <div class="card-footer border-top-0 pt-0">
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="form_tipo" value="gerar_parcelas">
+                                    <button type="submit" class="btn btn-info">
+                                        Gerar Parcelas
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
+
+                <div class="col-md-4">
+                    <div class="card card-outline card-secondary">
+                        <div class="card-header">
+                            <h3 class="card-title">Resumo Financeiro</h3>
+                        </div>
+                        <div class="card-body">
+                            {% if despesa %}
+                                <p class="mb-2"><strong>Status:</strong> {{ despesa.get_status_display }}</p>
+                                <p class="mb-2"><strong>Valor Total:</strong> R$ {{ despesa.valor }}</p>
+                                <p class="mb-2"><strong>Total Pago:</strong> R$ {{ despesa.total_pago }}</p>
+                                <p class="mb-2"><strong>Saldo Pendente:</strong> R$ {{ despesa.saldo_pendente }}</p>
+                                <p class="mb-0"><strong>Parcelas Previstas:</strong> {{ despesa.quantidade_parcelas_previstas }}/{{ despesa.quantidade_parcelas }}</p>
+                            {% else %}
+                                <p class="mb-0 text-muted">Cadastre a despesa para registrar pagamentos parciais ou parcelados.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if despesa %}
+                        <div class="card card-success">
+                            <div class="card-header">
+                                <h3 class="card-title">Registrar Pagamento</h3>
+                            </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_tipo" value="pagamento">
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label>{{ pagamento_form.parcela.label }}</label>
+                                        {{ pagamento_form.parcela }}
+                                        {% if pagamento_form.parcela.errors %}
+                                            <div class="text-danger">{{ pagamento_form.parcela.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ pagamento_form.data_pagamento.label }}</label>
+                                        {{ pagamento_form.data_pagamento }}
+                                        {% if pagamento_form.data_pagamento.errors %}
+                                            <div class="text-danger">{{ pagamento_form.data_pagamento.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ pagamento_form.valor.label }}</label>
+                                        {{ pagamento_form.valor }}
+                                        {% if pagamento_form.valor.errors %}
+                                            <div class="text-danger">{{ pagamento_form.valor.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="form-group">
+                                        <label>{{ pagamento_form.numero_parcela.label }}</label>
+                                        {{ pagamento_form.numero_parcela }}
+                                        {% if pagamento_form.numero_parcela.errors %}
+                                            <div class="text-danger">{{ pagamento_form.numero_parcela.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="form-group mb-0">
+                                        <label>{{ pagamento_form.observacao.label }}</label>
+                                        {{ pagamento_form.observacao }}
+                                        {% if pagamento_form.observacao.errors %}
+                                            <div class="text-danger">{{ pagamento_form.observacao.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <button type="submit" class="btn btn-success">Registrar Pagamento</button>
+                                </div>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
+
+            {% if despesa %}
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card card-outline card-info">
+                            <div class="card-header">
+                                <h3 class="card-title">Parcelas Previstas</h3>
+                            </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_tipo" value="baixar_parcelas">
+                                <div class="card-body">
+                                    {% if parcelas %}
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label>{{ baixa_parcelas_form.data_pagamento.label }}</label>
+                                                {{ baixa_parcelas_form.data_pagamento }}
+                                                {% if baixa_parcelas_form.data_pagamento.errors %}
+                                                    <div class="text-danger">{{ baixa_parcelas_form.data_pagamento.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label>{{ baixa_parcelas_form.observacao.label }}</label>
+                                                {{ baixa_parcelas_form.observacao }}
+                                                {% if baixa_parcelas_form.observacao.errors %}
+                                                    <div class="text-danger">{{ baixa_parcelas_form.observacao.errors }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% if baixa_parcelas_form.parcelas.errors %}
+                                            <div class="text-danger mb-2">{{ baixa_parcelas_form.parcelas.errors }}</div>
+                                        {% endif %}
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Baixar</th>
+                                                        <th>Parcela</th>
+                                                        <th>Vencimento</th>
+                                                        <th>Valor Previsto</th>
+                                                        <th>Total Pago</th>
+                                                        <th>Saldo</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for parcela in parcelas %}
+                                                        <tr>
+                                                            <td>
+                                                                {% if parcela.status != 'paga' %}
+                                                                    <input type="checkbox" name="parcelas" value="{{ parcela.id }}">
+                                                                {% else %}
+                                                                    -
+                                                                {% endif %}
+                                                            </td>
+                                                            <td>{{ parcela.numero_parcela }}</td>
+                                                            <td>{{ parcela.data_vencimento|date:"d/m/Y" }}</td>
+                                                            <td>R$ {{ parcela.valor_previsto }}</td>
+                                                            <td>R$ {{ parcela.total_pago }}</td>
+                                                            <td>R$ {{ parcela.saldo_pendente }}</td>
+                                                            <td>{{ parcela.get_status_display }}</td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <p class="mb-3 text-muted">Nenhuma parcela prevista foi gerada para esta despesa.</p>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer">
+                                    <button type="submit" class="btn btn-info">Baixar Parcelas Selecionadas</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Pagamentos da Despesa</h3>
+                            </div>
+                            <div class="card-body">
+                                {% if pagamentos %}
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Data</th>
+                                                    <th>Parcela</th>
+                                                    <th>Valor</th>
+                                                    <th>Observação</th>
+                                                    <th>Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for pagamento in pagamentos %}
+                                                    <tr>
+                                                        <td>{{ pagamento.data_pagamento|date:"d/m/Y" }}</td>
+                                                        <td>{{ pagamento.numero_parcela|default:"-" }}</td>
+                                                        <td>R$ {{ pagamento.valor }}</td>
+                                                        <td>{{ pagamento.observacao|default:"-" }}</td>
+                                                        <td>
+                                                            <a href="{% url 'excluir_pagamento_despesa' id=pagamento.id %}" class="btn btn-danger btn-sm">Excluir</a>
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% else %}
+                                    <p class="mb-0 text-muted">Nenhum pagamento registrado para esta despesa.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </section>
 

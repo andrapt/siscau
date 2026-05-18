@@ -46,6 +46,41 @@
 
 
         <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="small-box bg-info">
+                        <div class="inner">
+                            <h3>{{ resumo_despesas.total }}</h3>
+                            <p>Total de Despesas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="small-box bg-warning">
+                        <div class="inner">
+                            <h3>{{ resumo_despesas.abertas }}</h3>
+                            <p>Despesas Abertas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="small-box bg-primary">
+                        <div class="inner">
+                            <h3>{{ resumo_despesas.parciais }}</h3>
+                            <p>Pagamentos Parciais</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="small-box bg-success">
+                        <div class="inner">
+                            <h3>{{ resumo_despesas.pagas }}</h3>
+                            <p>Despesas Pagas</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
               <!-- /.card-header -->
               <div class="card-body">
@@ -54,9 +89,15 @@
                 <h3 class="card-title">Lista de despesas</h3>
                 
                 <div class="card-tools">
-                  <div class="input-group input-group-sm" style="width: 150px;">
+                  <div class="input-group input-group-sm" style="width: 320px;">
                     <form method="GET" id="formPesquisar">
                       <div class="input-group input-group-sm">
+                        <select class="form-control" id="status" name="status">
+                          <option value="">Todos os status</option>
+                          <option value="aberta" {% if status_atual == 'aberta' %}selected{% endif %}>Aberta</option>
+                          <option value="parcial" {% if status_atual == 'parcial' %}selected{% endif %}>Parcial</option>
+                          <option value="paga" {% if status_atual == 'paga' %}selected{% endif %}>Paga</option>
+                        </select>
                         <input type="text" class="form-control" id="search" name="search" placeholder="Pesquisar" value="{{ request.GET.search }}">
                         <span class="input-group-append">
                           <button type="button" id="btnPesqusiar" class="btn btn-info btn-flat"><i class="fas fa-search"></i> </button>
@@ -78,6 +119,10 @@
                         <th>Fonte</th>
                         <th>Descrição</th>
                         <th>Valor</th>
+                        <th>Status</th>
+                        <th>Total Pago</th>
+                        <th>Saldo</th>
+                        <th>Pagamentos</th>
                         <th>Ações</th>
                      </tr>
                     </thead>
@@ -89,8 +134,20 @@
                             <td> {{ despesa.categoria.nome }} </td>
                             <td>{{ despesa.get_fonte_display }}</td>
                             <td>{{ despesa.descricao }}</td>
-                             <td>{{ despesa.valor|currency_brl }}</td>
-                             <td> <a href="{% url 'editar_despesa' id=despesa.id %}" class="btn btn-primary btn-sm">Editar</a> 
+                            <td>{{ despesa.valor|currency_brl }}</td>
+                            <td>
+                                {% if despesa.status == 'aberta' %}
+                                    <span class="badge badge-warning">Aberta</span>
+                                {% elif despesa.status == 'parcial' %}
+                                    <span class="badge badge-primary">Parcial</span>
+                                {% else %}
+                                    <span class="badge badge-success">Paga</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ despesa.total_pago|currency_brl }}</td>
+                            <td>{{ despesa.saldo_pendente|currency_brl }}</td>
+                            <td>{{ despesa.quantidade_pagamentos }}/{{ despesa.quantidade_parcelas }}</td>
+                             <td> <a href="{% url 'editar_despesa' id=despesa.id %}" class="btn btn-primary btn-sm">Gerenciar</a> 
                               <a href="{% url 'excluir_despesa' id=despesa.id %}" class="delete-btn btn btn-danger btn-sm">Excluir</a></td>
                         </tr>
                       {% endfor %} 
@@ -110,7 +167,7 @@
                     <ul class="pagination">
                         {% if despesas.has_previous %}
                           <li class="paginate_button page-item previous" id="example1_previous">
-                              <a href="?page={{despesas.previous_page_number}}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-controls="example1" data-dt-idx="0" tabindex="0" class="page-link">Anterior</a>
+                              <a href="?page={{despesas.previous_page_number}}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if status_atual %}&status={{ status_atual }}{% endif %}" aria-controls="example1" data-dt-idx="0" tabindex="0" class="page-link">Anterior</a>
                           </li>
                         {% else %}
                           <li class="paginate_button page-item previous disabled" id="example1_previous">
@@ -125,14 +182,14 @@
                               </li>
                             {% elif i > despesas.number|add:'-5' and i < despesas.number|add:'5' %}
                               <li class="paginate_button page-item">
-                                  <a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-controls="example1" data-dt-idx="2" tabindex="0" class="page-link">{{ i }}</a>
+                                  <a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if status_atual %}&status={{ status_atual }}{% endif %}" aria-controls="example1" data-dt-idx="2" tabindex="0" class="page-link">{{ i }}</a>
                               </li>                                
                             {% endif %}
                         {% endfor %}                        
                         
                         {% if despesas.has_next %}
                           <li class="paginate_button page-item next" id="example1_next">
-                              <a href="?page={{despesas.next_page_number}}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" aria-controls="example1" data-dt-idx="0" tabindex="0" class="page-link">Próximo</a>
+                              <a href="?page={{despesas.next_page_number}}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if status_atual %}&status={{ status_atual }}{% endif %}" aria-controls="example1" data-dt-idx="0" tabindex="0" class="page-link">Próximo</a>
                           </li>
                         {% else %}
                           <li class="paginate_button page-item next disabled" id="example1_next">
@@ -161,6 +218,10 @@
             if (e.key === 'Enter') {
                 document.getElementById('formPesquisar').submit();
             }
+        });
+
+        document.getElementById('status').addEventListener('change', function() {
+            document.getElementById('formPesquisar').submit();
         });
 
       
