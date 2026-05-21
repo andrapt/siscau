@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from django import forms
@@ -306,7 +307,7 @@ class PagamentoDespesaForm(forms.ModelForm):
             'observacao': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 
-    def __init__(self, *args, despesa=None, **kwargs):
+    def __init__(self, *args, despesa=None, parcela=None, **kwargs):
         self.despesa = despesa
         super().__init__(*args, **kwargs)
         self.fields['parcela'].required = False
@@ -314,6 +315,28 @@ class PagamentoDespesaForm(forms.ModelForm):
             self.fields['parcela'].queryset = despesa.parcelas.all()
         else:
             self.fields['parcela'].queryset = ParcelaDespesa.objects.none()
+
+        if despesa and not self.is_bound and not self.instance.pk:
+            parcela_padrao = parcela
+            if not parcela_padrao and despesa.quantidade_parcelas > 1:
+                parcela_padrao = despesa.parcelas.exclude(status='paga').order_by('numero_parcela').first()
+
+            if parcela_padrao:
+                self.initial.setdefault('parcela', parcela_padrao.pk)
+                self.initial.setdefault('numero_parcela', parcela_padrao.numero_parcela)
+                self.initial.setdefault('data_pagamento', parcela_padrao.data_vencimento)
+                self.initial.setdefault('valor', parcela_padrao.saldo_pendente)
+            else:
+                self.initial.setdefault(
+                    'numero_parcela',
+                    1 if (despesa.quantidade_parcelas or 1) <= 1 else despesa.quantidade_pagamentos + 1
+                )
+                self.initial.setdefault(
+                    'data_pagamento',
+                    despesa.data or despesa.data_primeiro_vencimento or date.today()
+                )
+                self.initial.setdefault('valor', despesa.saldo_pendente)
+
         for field_name, field in self.fields.items():
             if field.required:
                 self.fields[field_name].label = f'{field.label} *'

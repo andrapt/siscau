@@ -49,6 +49,7 @@ urlpatterns = [
     ################# Rotas para gerenciamento de Despesas #################
     path('despesas/', views.listaDespesas, name='despesas'),
     path('editar_despesa/<int:id>/', views.editarDespesa, name='editar_despesa'),
+    path('pagar_despesa/<int:id>/', views.pagarDespesa, name='pagar_despesa'),
     path('cadastrar_despesa/', views.cadastrarDespesa, name='cadastrar_despesa'),
     path('excluir_despesa/<int:id>/', views.excluirDespesa, name='excluir_despesa'),
     path('excluir_pagamento_despesa/<int:id>/', views.excluirPagamentoDespesa, name='excluir_pagamento_despesa'),

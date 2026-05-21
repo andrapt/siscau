@@ -50,7 +50,7 @@
                 <div class="col-md-3">
                     <div class="small-box bg-info">
                         <div class="inner">
-                            <h3>{{ resumo_despesas.total }}</h3>
+                            <h3>{{ resumo_despesas.total_valor|currency_brl }}</h3>
                             <p>Total de Despesas</p>
                         </div>
                     </div>
@@ -58,7 +58,7 @@
                 <div class="col-md-3">
                     <div class="small-box bg-warning">
                         <div class="inner">
-                            <h3>{{ resumo_despesas.abertas }}</h3>
+                            <h3>{{ resumo_despesas.abertas_valor|currency_brl }}</h3>
                             <p>Despesas Abertas</p>
                         </div>
                     </div>
@@ -66,7 +66,7 @@
                 <div class="col-md-3">
                     <div class="small-box bg-primary">
                         <div class="inner">
-                            <h3>{{ resumo_despesas.parciais }}</h3>
+                            <h3>{{ resumo_despesas.parciais_valor|currency_brl }}</h3>
                             <p>Pagamentos Parciais</p>
                         </div>
                     </div>
@@ -74,7 +74,7 @@
                 <div class="col-md-3">
                     <div class="small-box bg-success">
                         <div class="inner">
-                            <h3>{{ resumo_despesas.pagas }}</h3>
+                            <h3>{{ resumo_despesas.pagas_valor|currency_brl }}</h3>
                             <p>Despesas Pagas</p>
                         </div>
                     </div>
@@ -113,10 +113,8 @@
                             <table id="example1" class="table table-bordered dataTable table-hover" aria-describedby="example1_info">
                     <thead>
                      <tr>
-                        <th>Código</th>
                         <th>Data</th>
                         <th>Categoria</th>
-                        <th>Fonte</th>
                         <th>Descrição</th>
                         <th>Valor</th>
                         <th>Status</th>
@@ -129,10 +127,8 @@
                   <tbody>
                       {% for despesa in despesas %}
                         <tr>
-                            <td>{{ despesa.id }}</td>
                             <td>{{ despesa.data|date:"d/m/Y" }}</td>
                             <td> {{ despesa.categoria.nome }} </td>
-                            <td>{{ despesa.get_fonte_display }}</td>
                             <td>{{ despesa.descricao }}</td>
                             <td>{{ despesa.valor|currency_brl }}</td>
                             <td>
@@ -147,8 +143,13 @@
                             <td>{{ despesa.total_pago|currency_brl }}</td>
                             <td>{{ despesa.saldo_pendente|currency_brl }}</td>
                             <td>{{ despesa.quantidade_pagamentos }}/{{ despesa.quantidade_parcelas }}</td>
-                             <td> <a href="{% url 'editar_despesa' id=despesa.id %}" class="btn btn-primary btn-sm">Gerenciar</a> 
-                              <a href="{% url 'excluir_despesa' id=despesa.id %}" class="delete-btn btn btn-danger btn-sm">Excluir</a></td>
+                             <td>
+                              {% if despesa.status != 'paga' %}
+                                <a href="{% url 'pagar_despesa' id=despesa.id %}" class="btn btn-success btn-sm">Pagar</a>
+                              {% endif %}
+                              <a href="{% url 'editar_despesa' id=despesa.id %}" class="btn btn-primary btn-sm">Gerenciar</a> 
+                              <a href="{% url 'excluir_despesa' id=despesa.id %}" class="delete-btn btn btn-danger btn-sm">Excluir</a>
+                             </td>
                         </tr>
                       {% endfor %} 
                   </tbody>

@@ -190,6 +190,51 @@ class DespesaViewsTests(TestCase):
 
         resumo = response.context['resumo_despesas']
         self.assertEqual(resumo['total'], 3)
+        self.assertEqual(resumo['total_valor'], Decimal('600.00'))
         self.assertEqual(resumo['abertas'], 1)
+        self.assertEqual(resumo['abertas_valor'], Decimal('100.00'))
         self.assertEqual(resumo['parciais'], 1)
+        self.assertEqual(resumo['parciais_valor'], Decimal('200.00'))
         self.assertEqual(resumo['pagas'], 1)
+        self.assertEqual(resumo['pagas_valor'], Decimal('300.00'))
+
+    def test_pagamento_rapido_preenche_despesa_a_vista_com_data_e_valor_padrao(self):
+        response = self.client.get(reverse('pagar_despesa', args=[self.aberta.id]))
+
+        form = response.context['pagamento_form']
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(form['data_pagamento'].value(), date(2026, 5, 18))
+        self.assertEqual(form['valor'].value(), Decimal('100.00'))
+        self.assertEqual(form['numero_parcela'].value(), 1)
+
+    def test_pagamento_rapido_preenche_proxima_parcela_pendente(self):
+        self.parcial.data_primeiro_vencimento = date(2026, 6, 10)
+        self.parcial.save(update_fields=['data_primeiro_vencimento'])
+        self.parcial.gerar_parcelas_previstas()
+
+        response = self.client.get(reverse('pagar_despesa', args=[self.parcial.id]))
+
+        form = response.context['pagamento_form']
+        parcela = response.context['parcela_selecionada']
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(parcela)
+        self.assertEqual(parcela.numero_parcela, 1)
+        self.assertEqual(form['parcela'].value(), parcela.id)
+        self.assertEqual(form['data_pagamento'].value(), date(2026, 6, 10))
+        self.assertEqual(form['valor'].value(), Decimal('100.00'))
+
+    def test_pagamento_rapido_registra_pagamento_sem_abrir_edicao(self):
+        response = self.client.post(
+            reverse('pagar_despesa', args=[self.aberta.id]),
+            {
+                'data_pagamento': '2026-05-18',
+                'valor': '100.00',
+                'numero_parcela': '1',
+                'observacao': 'Pagamento rapido',
+            }
+        )
+
+        self.assertRedirects(response, reverse('despesas'))
+        self.aberta.refresh_from_db()
+        self.assertEqual(self.aberta.status, 'paga')
+        self.assertEqual(self.aberta.pagamentos.count(), 1)

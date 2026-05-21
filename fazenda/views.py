@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum, Min
@@ -661,9 +662,13 @@ def listaDespesas(request):
 
     resumo_despesas = {
         'total': despesas_base.count(),
+        'total_valor': despesas_base.aggregate(total=Sum('valor'))['total'] or 0,
         'abertas': despesas_base.filter(status='aberta').count(),
+        'abertas_valor': despesas_base.filter(status='aberta').aggregate(total=Sum('valor'))['total'] or 0,
         'parciais': despesas_base.filter(status='parcial').count(),
+        'parciais_valor': despesas_base.filter(status='parcial').aggregate(total=Sum('valor'))['total'] or 0,
         'pagas': despesas_base.filter(status='paga').count(),
+        'pagas_valor': despesas_base.filter(status='paga').aggregate(total=Sum('valor'))['total'] or 0,
     }
 
     context = {
@@ -689,6 +694,12 @@ def _despesa_contexto_formulario(form, despesa=None, pagamento_form=None, baixa_
         "pagamentos": pagamentos,
         "parcelas": parcelas,
     }
+
+def _obter_parcela_pagamento_rapido(despesa, parcela_id=None):
+    parcelas_pendentes = despesa.parcelas.exclude(status='paga').order_by('numero_parcela')
+    if parcela_id:
+        return get_object_or_404(parcelas_pendentes, id=parcela_id)
+    return parcelas_pendentes.first()
 
 def editarDespesa(request, id):
     despesa = get_object_or_404(Despesa, id=id)
@@ -784,6 +795,50 @@ def excluirDespesa(request, id):
     despesa.delete()
     messages.success(request, "Registro excluído com sucesso!")
     return redirect('despesas')
+
+
+@login_required
+def pagarDespesa(request, id):
+    despesa = get_object_or_404(Despesa, id=id)
+
+    if despesa.status == 'paga':
+        messages.info(request, 'Esta despesa ja esta totalmente paga.')
+        return redirect('despesas')
+
+    if despesa.quantidade_parcelas > 1 and not despesa.possui_parcelas_previstas:
+        try:
+            despesa.gerar_parcelas_previstas()
+        except ValidationError:
+            pass
+
+    parcela_id = request.GET.get('parcela') or request.POST.get('parcela')
+    parcela_selecionada = _obter_parcela_pagamento_rapido(despesa, parcela_id) if despesa.quantidade_parcelas > 1 else None
+
+    if request.method == "POST":
+        pagamento_form = PagamentoDespesaForm(
+            request.POST,
+            despesa=despesa,
+            parcela=parcela_selecionada,
+        )
+        if pagamento_form.is_valid():
+            pagamento_form.save()
+            messages.success(request, 'Pagamento registrado com sucesso!')
+            return redirect('despesas')
+    else:
+        pagamento_form = PagamentoDespesaForm(
+            despesa=despesa,
+            parcela=parcela_selecionada,
+        )
+
+    context = {
+        'despesa': despesa,
+        'pagamento_form': pagamento_form,
+        'parcela_selecionada': parcela_selecionada,
+        'pagamento_rapido': True,
+        'eh_parcela_unica': despesa.quantidade_parcelas <= 1,
+        'mostrar_seletor_parcela': despesa.quantidade_parcelas > 1 and despesa.parcelas.exclude(status='paga').exists(),
+    }
+    return render(request, 'despesa/pagar_despesa.html', context)
 
 
 @login_required
