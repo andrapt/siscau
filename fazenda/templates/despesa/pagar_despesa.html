@@ -1,0 +1,150 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+{% block content_header %}
+    <script src="{% static 'plugins/jquery/jquery.min.js' %}"></script>
+{% endblock %}
+
+{% block title %}
+    SISCau - Sistema de Controle Agrícola
+{% endblock %}
+
+{% block content %}
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Pagamento Rápido</h1>
+          </div>
+          <div class="col-sm-6">
+            <ol class="breadcrumb float-sm-right">
+              <li class="breadcrumb-item"><a href="{% url 'despesas' %}">Despesas</a></li>
+              <li class="breadcrumb-item active">Pagar</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card card-outline card-secondary">
+                        <div class="card-header">
+                            <h3 class="card-title">Resumo da Despesa</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-2"><strong>Descricao:</strong> {{ despesa.descricao }}</p>
+                            <p class="mb-2"><strong>Categoria:</strong> {{ despesa.categoria.nome }}</p>
+                            <p class="mb-2"><strong>Valor Total:</strong> R$ {{ despesa.valor }}</p>
+                            <p class="mb-2"><strong>Total Pago:</strong> R$ {{ despesa.total_pago }}</p>
+                            <p class="mb-0"><strong>Saldo Pendente:</strong> R$ {{ despesa.saldo_pendente }}</p>
+                        </div>
+                    </div>
+
+                    <div class="card card-outline card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">Tipo de Pagamento</h3>
+                        </div>
+                        <div class="card-body">
+                            {% if eh_parcela_unica %}
+                                <p class="mb-1"><strong>Modalidade:</strong> Parcela unica / a vista</p>
+                                <p class="mb-0 text-muted">A data e o valor ja vem preenchidos com base na despesa.</p>
+                            {% elif parcela_selecionada %}
+                                <p class="mb-1"><strong>Parcela Selecionada:</strong> {{ parcela_selecionada.numero_parcela }}</p>
+                                <p class="mb-1"><strong>Vencimento:</strong> {{ parcela_selecionada.data_vencimento|date:"d/m/Y" }}</p>
+                                <p class="mb-0 text-muted">A data e o valor ja vem preenchidos com base na parcela pendente.</p>
+                            {% else %}
+                                <p class="mb-0 text-muted">As parcelas previstas ainda nao foram geradas para esta despesa.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-8">
+                    <div class="card card-success">
+                        <div class="card-header">
+                            <h3 class="card-title">Registrar Pagamento</h3>
+                        </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="card-body">
+                                {% if pagamento_form.non_field_errors %}
+                                    <div class="alert alert-danger">
+                                        {{ pagamento_form.non_field_errors }}
+                                    </div>
+                                {% endif %}
+
+                                {% if not eh_parcela_unica and mostrar_seletor_parcela %}
+                                    <div class="form-group">
+                                        <label>{{ pagamento_form.parcela.label }}</label>
+                                        {{ pagamento_form.parcela }}
+                                        {% if pagamento_form.parcela.errors %}
+                                            <div class="text-danger">{{ pagamento_form.parcela.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>{{ pagamento_form.data_pagamento.label }}</label>
+                                            {{ pagamento_form.data_pagamento }}
+                                            {% if pagamento_form.data_pagamento.errors %}
+                                                <div class="text-danger">{{ pagamento_form.data_pagamento.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>{{ pagamento_form.valor.label }}</label>
+                                            {{ pagamento_form.valor }}
+                                            {% if pagamento_form.valor.errors %}
+                                                <div class="text-danger">{{ pagamento_form.valor.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>{{ pagamento_form.numero_parcela.label }}</label>
+                                            {{ pagamento_form.numero_parcela }}
+                                            {% if pagamento_form.numero_parcela.errors %}
+                                                <div class="text-danger">{{ pagamento_form.numero_parcela.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mb-0">
+                                    <label>{{ pagamento_form.observacao.label }}</label>
+                                    {{ pagamento_form.observacao }}
+                                    {% if pagamento_form.observacao.errors %}
+                                        <div class="text-danger">{{ pagamento_form.observacao.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button type="submit" class="btn btn-success">Confirmar Pagamento</button>
+                                <a href="{% url 'despesas' %}" class="btn btn-default">Cancelar</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var campoParcela = document.getElementById('id_parcela');
+            if (campoParcela) {
+                campoParcela.addEventListener('change', function() {
+                    if (this.value) {
+                        window.location.href = "{% url 'pagar_despesa' id=despesa.id %}?parcela=" + this.value;
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}
